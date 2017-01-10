@@ -1,0 +1,4 @@
+name: pet_pipeline
+dependencies:
+- python=2
+- pip
