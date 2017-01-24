@@ -1,0 +1,109 @@
+{
+    "selectfiles": {
+        "anat": "freesurfer/mri/brainmask.nii.gz",
+        "aparaseg": "freesurfer/mri/{subject_id}_aparc_aseg.nii.gz",
+        "framingPath": "frametimes*.csv",
+        "petframes": "{subject_id}_PIB_frame*.nii.gz"
+    },
+    "preparation": {
+        "kind": "berkeley",
+        "origin": "berkeley"
+    },
+    "realign": {
+        "kind": "berkeley_spm_50to70",
+        "realign_param": {
+            "register_to_mean": true,
+            "quality": 0.9000,
+            "separation": 4,
+            "fwhm": 5,
+            "interp": 2,
+            "wrap": [0, 0, 0],
+            "write_which": [2, 0],
+            "write_interp": 4,
+            "write_wrap": [0, 0, 0],
+            "write_mask": true,
+            "out_prefix": "r"
+        },
+        "calcmean_param": {"mean_method": "berkeley_spm"}
+    },
+    "t1registration": {
+        "kind": "spm",
+        "coregister_param": {
+            "cost_function": "nmi",
+            "fwhm": [7, 7],
+            "jobtype": "estwrite",
+            "out_prefix": "r",
+            "separation": [4, 2],
+            "tolerance": [
+                0.02,
+                0.02,
+                0.02,
+                0.001,
+                0.001,
+                0.001,
+                0.01,
+                0.01,
+                0.01,
+                0.001,
+                0.001,
+                0.001],
+            "write_interp": 1,
+            "write_wrap": [0, 0, 0],
+            "write_mask": false
+        }
+    },
+    "tplregistration": {
+        "kind": "spm",
+        "coregister_param": {
+            "target": "",
+            "cost_function": "nmi",
+            "separation": [4, 2],
+            "fwhm": [7, 7],
+            "jobtype": "est",
+            "tolerance": [
+                0.02,
+                0.02,
+                0.02,
+                0.001,
+                0.001,
+                0.001,
+                0.01,
+                0.01,
+                0.01,
+                0.001,
+                0.001,
+                0.001]
+        }
+    },
+    "segmentation": {
+        "kind": "spm",
+        "newsegment": {}
+    },
+    "suvr": {
+        "kind": "",
+        "cerebellar": true,
+        "whitematter": false
+    },
+    "pvc": {
+        "kind": "",
+        "params": {
+            "fwhm_x": 6,
+            "fwhm_y": 6,
+            "fwhm_z": 6,
+            "pvc": "RBV"
+        }
+    },
+    "logging": {
+        "workflow_level": "INFO",
+        "filemanip_level": "INFO",
+        "interface_level": "INFO",
+        "log_to_file": true,
+        "log_directory": "",
+        "log_size": 254000,
+        "log_rotate": 4
+    },
+    "execution": {
+        "stop_on_first_crash": false,
+        "hash_method": "content"
+    }
+}
