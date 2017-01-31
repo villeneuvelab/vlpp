@@ -9,16 +9,16 @@ import sys
 APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(APP_DIR)
 
-from lib import validation
+from lib import utils, validation
 import workflows.main
 
 
 # Importing nipype create a PowmInsecureWarning on guillimin
 if os.getenv("VILLENEUVE_SERVER") == "guillimin":
-    print("""
+    print("""\033[92m
         PowmInsecureWarning on Guillimin server
         This warning is known by the Calcul Québec team operating guillimin
-        """)
+        \033[0m""")
 
 
 def get_arguments():
@@ -79,20 +79,32 @@ def get_arguments():
 
 
 def main():
-    #TODO Checks
+    #TODO version checking
 
     # Arguments
     args = get_arguments()
     argsValidated = validation.Validation(args)
-    #print(argsValidated.config_dict)
-    #print(argsValidated.config_dict['arguments'])
+    utils.print_json(
+            argsValidated.config_dict['arguments'],
+            "Pipeline arguments:",
+            )
 
     # Main workflow
     main_wf = workflows.main.main_wf(argsValidated.config_dict)
 
     # Run
-    #main_wf.run()
-    #main_wf.write_graph()
+    main_wf.run()
+
+    """DEBUG
+    done = main_wf.run()
+    print(dir(done))
+    print done.nodes()[1].outputs
+    print done.node_dict_factory()
+    no = done.get_node('petfiles')
+    print no.inputs
+    print no.outputs
+    main_wf.write_graph()
+    """
 
     """
     try:

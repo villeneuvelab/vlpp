@@ -1,13 +1,13 @@
 {
     "selectfiles": {
-        "anat": "freesurfer/mri/brainmask.nii.gz",
-        "aparaseg": "freesurfer/mri/{subject_id}_aparc_aseg.nii.gz",
-        "framingPath": "frametimes*.csv",
-        "petframes": "{subject_id}_PIB_frame*.nii.gz"
+        "freesurfer": "freesurfer",
+        "petfiles": {
+            "frametimes": "frametimes*.csv",
+            "petframes": "{subject_id}_PIB_frame*.nii.gz"
+        }
     },
     "preparation": {
-        "kind": "berkeley",
-        "origin": "berkeley"
+        "kind": "UCD"
     },
     "realign": {
         "kind": "berkeley_spm_50to70",

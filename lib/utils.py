@@ -21,6 +21,12 @@ def write_json(data, filename):
         json.dump(data, f, indent=4, sort_keys=True)
 
 
+def print_json(data, msg=None):
+    print
+    if msg != None: print msg
+    print json.dumps(data, indent=4)
+    print
+
 def get_subjects(input_dir):
     subject_list = []
     for fname in os.listdir(input_dir):
@@ -65,14 +71,12 @@ class WorkflowManager(object):
     def connect(self, main_wf):
         raise NotImplementedError
 
-    def exit(self):
+    def implement(self, main_wf):
+        self.generate()
+        self.connect(main_wf)
+
+    def implement_error(self):
         #TODO implement this function with nipype error or logging ?
         msg = "'{}' is not implemented for the {} workflow"
         print(msg.format(self.kind, self.name))
 
-
-#TODO: old code to delete
-"""
-def script_path():
-    return os.path.dirname(os.path.realpath(sys.argv[0]))
-"""

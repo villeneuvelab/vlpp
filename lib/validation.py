@@ -34,7 +34,7 @@ class Validation(object):
         """
         wd = self._args.working_dir
         if wd == None:
-            wd = os.path.join(os.environ['SCRATCH'], utils.__PIPELINENAME__)
+            wd = os.path.join(os.environ['SCRATCH'])
         return os.path.abspath(wd)
 
     @property

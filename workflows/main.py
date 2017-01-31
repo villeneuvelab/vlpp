@@ -16,16 +16,23 @@ from lib import utils
 
 def main_wf(config_dict):
 
-    # Directories
+    # Usefull variables
     output_dir = config_dict['arguments']['output_dir']
     working_dir = config_dict['arguments']['working_dir']
+    user_debug = config_dict['arguments']['debug']
+    subject_list = [config_dict['arguments']['subject_id']]
+    input_dir = config_dict['arguments']['input_dir']
+    templates = config_dict['selectfiles']['petfiles']
+    fssource_subject_id = config_dict['selectfiles']['freesurfer']
+
+
+    # Directories
     for directory in [output_dir, working_dir]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
 
     # Nipype configuration
-    user_debug = config_dict['arguments']['debug']
     config_dict['logging']['log_directory'] = output_dir
     config.update_config(config_dict)
     if user_debug:
@@ -39,7 +46,6 @@ def main_wf(config_dict):
 
 
     # Infosource
-    subject_list = [config_dict['arguments']['subject_id']]
     infields = ['subject_id']
     infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
     infosource.iterables = [
@@ -48,28 +54,19 @@ def main_wf(config_dict):
 
 
     # PET Files
-    input_dir = config_dict['arguments']['input_dir']
-    templates = config_dict['selectfiles']
-    petfiles = pe.Node(nio.SelectFiles(templates), 'selectfiles')
+    petfiles = pe.Node(nio.SelectFiles(templates), 'petfiles')
     petfiles.inputs.base_directory = input_dir
     petfiles.inputs.sort_filelist = True
-    petfiles.inputs.raise_on_empty = False
-    print petfiles.inputs
+    #petfiles.inputs.raise_on_empty = False
 
 
     # Freesurfer source
     fssource = pe.Node(nio.FreeSurferSource(), 'fssource')
     fssource.inputs.subjects_dir = input_dir
-    fssource.inputs.subject_id = 'freesurfer'
-
-    for i in petfiles, fssource:
-        res = i.run()
-        print(res.outputs)
+    fssource.inputs.subject_id = fssource_subject_id
 
 
-    #~~~~~~~~~~#
-    # Datasink #
-    #~~~~~~~~~~#
+    # Datasink
     datasink = pe.Node(nio.DataSink(), 'datasink')
     datasink.inputs.base_directory = output_dir
     #TODO
@@ -79,28 +76,24 @@ def main_wf(config_dict):
     #datasink.inputs.substitutions = substitutions
 
 
-    #~~~~~~~~~~~~~~~~~~~~~#
-    # General connections #
-    #~~~~~~~~~~~~~~~~~~~~~#
+    # General connections
     main_wf.connect([
-        (infosource, selectfiles, [[_] *2 for _ in infields]),
+        (infosource, petfiles, [[_] *2 for _ in infields]),
+        (infosource, fssource, [[_] *2 for _ in infields]),
         #(infosource, datasink, [('subject_id', 'container')]),
         ])
     main_wf.add_nodes([datasink])
 
 
-    #~~~~~~~~~~#
-    # Worflows #
-    #~~~~~~~~~~#
+    # Worflows
 
-    '''
-    # Preparation
+
+    ## Preparation
     from workflows.preparation import Preparation
     preparation = Preparation(config_dict['preparation'], 'Preparation')
-    preparation.generate()
-    preparation.connect(main_wf)
-    '''
+    preparation.implement(main_wf)
 
+    '''
     # Realign
     from workflows.realign import Realign
     realign = Realign(config_dict['realign'], 'Realign')
@@ -108,7 +101,6 @@ def main_wf(config_dict):
     realign.connect(main_wf)
     print main_wf.list_nodes_names()
 
-    '''
     # T1 registration
     t1registrationName = config_dict['t1registration']['name']
 
