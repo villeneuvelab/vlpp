@@ -10,7 +10,7 @@
         "kind": "UCD"
     },
     "realign": {
-        "kind": "berkeley_spm_50to70",
+        "kind": "UCD",
         "realign_param": {
             "register_to_mean": true,
             "quality": 0.9000,
@@ -24,7 +24,7 @@
             "write_mask": true,
             "out_prefix": "r"
         },
-        "calcmean_param": {"mean_method": "berkeley_spm"}
+        "calcmean_param": {"mean_method": "UCD_python"}
     },
     "t1registration": {
         "kind": "spm",

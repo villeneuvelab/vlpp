@@ -87,20 +87,17 @@ def main_wf(config_dict):
 
     # Worflows
 
-
     ## Preparation
     from workflows.preparation import Preparation
     preparation = Preparation(config_dict['preparation'], 'Preparation')
     preparation.implement(main_wf)
 
-    '''
-    # Realign
+    ## Realign
     from workflows.realign import Realign
     realign = Realign(config_dict['realign'], 'Realign')
-    realign.generate()
-    realign.connect(main_wf)
-    print main_wf.list_nodes_names()
+    realign.implement(main_wf)
 
+    '''
     # T1 registration
     t1registrationName = config_dict['t1registration']['name']
 

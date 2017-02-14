@@ -23,8 +23,8 @@ def write_json(data, filename):
 
 def print_json(data, msg=None):
     print
-    if msg != None: print msg
-    print json.dumps(data, indent=4)
+    if msg != None: print(msg)
+    print(json.dumps(data, indent=4))
     print
 
 def get_subjects(input_dir):
