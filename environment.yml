@@ -1,0 +1,4 @@
+name: vlpp-env
+dependencies:
+    - python=3.4
+    - nipype
