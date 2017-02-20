@@ -26,7 +26,10 @@ class Validation(object):
     def _output_dir(self):
         """Return absolute path of the output
         """
-        return os.path.abspath(self._args.output_dir)
+        return os.path.join(
+                os.path.abspath(self._args.output_dir),
+                self._subject_id,
+                )
 
     @property
     def _working_dir(self):
@@ -35,7 +38,10 @@ class Validation(object):
         wd = self._args.working_dir
         if wd == None:
             wd = os.path.join(os.environ['SCRATCH'])
-        return os.path.abspath(wd)
+        return os.path.join(
+                os.path.abspath(wd),
+                self._subject_id,
+                )
 
     @property
     def _debug(self):

@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import shutil
 import sys
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -79,7 +80,6 @@ def get_arguments():
 
 
 def main():
-    #TODO version checking
 
     # Arguments
     args = get_arguments()
@@ -95,6 +95,13 @@ def main():
     # Graph
     #graph2use: 'orig', 'hierarchical' (default), 'flat', 'exec', 'colored'
     main_wf.write_graph(graph2use='colored')
+    src = os.path.join(
+            argsValidated.config_dict['arguments']['working_dir'],
+            utils.__PIPELINENAME__,
+            'graph.dot.png')
+    shutil.copy2(
+            src,
+            argsValidated.config_dict['arguments']['output_dir'])
 
     # Run
     main_wf.run()

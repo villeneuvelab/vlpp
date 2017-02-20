@@ -20,7 +20,8 @@ def main_wf(config_dict):
     output_dir = config_dict['arguments']['output_dir']
     working_dir = config_dict['arguments']['working_dir']
     user_debug = config_dict['arguments']['debug']
-    subject_list = [config_dict['arguments']['subject_id']]
+    #subject_list = [config_dict['arguments']['subject_id']]
+    subject_id = config_dict['arguments']['subject_id']
     input_dir = config_dict['arguments']['input_dir']
     templates = config_dict['selectfiles']['petfiles']
     fssource_subject_id = config_dict['selectfiles']['freesurfer']
@@ -48,9 +49,10 @@ def main_wf(config_dict):
     # Infosource
     infields = ['subject_id']
     infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
-    infosource.iterables = [
-            ('subject_id', subject_list),
-            ]
+    infosource.inputs.subject_id = subject_id
+    #infosource.iterables = [
+            #('subject_id', subject_list),
+            #]
 
 
     # PET Files
@@ -69,11 +71,10 @@ def main_wf(config_dict):
     # Datasink
     datasink = pe.Node(nio.DataSink(), 'datasink')
     datasink.inputs.base_directory = output_dir
-    #TODO
     substitutions = [
             ('_subject_id_', '')
             ]
-    #datasink.inputs.substitutions = substitutions
+    datasink.inputs.substitutions = substitutions
 
 
     # General connections
