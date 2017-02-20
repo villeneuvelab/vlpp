@@ -92,19 +92,12 @@ def main():
     # Main workflow
     main_wf = workflows.main.main_wf(argsValidated.config_dict)
 
+    # Graph
+    #graph2use: 'orig', 'hierarchical' (default), 'flat', 'exec', 'colored'
+    main_wf.write_graph(graph2use='colored')
+
     # Run
     main_wf.run()
-
-    """DEBUG
-    done = main_wf.run()
-    print(dir(done))
-    print done.nodes()[1].outputs
-    print done.node_dict_factory()
-    no = done.get_node('petfiles')
-    print no.inputs
-    print no.outputs
-    main_wf.write_graph()
-    """
 
     """
     try:
@@ -117,5 +110,7 @@ def main():
 
     return 0
 
+
 if __name__ == '__main__':
     sys.exit(main())
+

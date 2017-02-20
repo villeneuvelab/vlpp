@@ -1,4 +1,5 @@
 name: vlpp-env
 dependencies:
     - python=3.4
-    - nipype
+    - nipype=0.12.1
+    - graphviz
