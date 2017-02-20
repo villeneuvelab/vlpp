@@ -79,10 +79,10 @@ def main_wf(config_dict):
     # General connections
     main_wf.connect([
         (infosource, petfiles, [[_] *2 for _ in infields]),
-        (infosource, fssource, [[_] *2 for _ in infields]),
+        #(infosource, fssource, [[_] *2 for _ in infields]),
         #(infosource, datasink, [('subject_id', 'container')]),
         ])
-    main_wf.add_nodes([datasink])
+    main_wf.add_nodes([datasink, fssource])
 
 
     # Worflows
@@ -97,96 +97,32 @@ def main_wf(config_dict):
     realign = Realign(config_dict['realign'], 'Realign')
     realign.implement(main_wf)
 
+    ## T1 registration
+    from workflows.t1registration import T1registration
+    t1registration = T1registration(config_dict['t1registration'],
+                                    'T1registration')
+    t1registration.implement(main_wf)
+
     '''
-    # T1 registration
-    t1registrationName = config_dict['t1registration']['name']
-
-    if t1registrationName == 'spm':
-        #import
-        from workflows.t1registration import t1registration_spm
-        t1registration = t1registration_spm(config_dict['t1registration'])
-        #connect
-        main_wf.connect([
-            (selectfiles, t1registration, [('anat', 'gunzip.in_file')]),
-            (wfd['realign'], t1registration,
-                [('calcmean.out_file', 'coregister.source')]),
-            (t1registration, datasink, [
-                ('coregister.coregistered_files',
-                    't1registration.@coregistered_files'),
-                ('coregister.coregistered_source',
-                    't1registration.@coregistered_source'),
-                ]),
-            ])
-
-    elif t1registrationName == 'fsl':
-        pass
-        #TODO return registration_fsl(config)
-
-    else:
-        msg = "'{}' is not implemented for the t1registration workflow"
-        print msg.format(t1registrationName)
-
-
-
-    # Template Registration
-    tplregistrationName = config_dict['tplregistration']['name']
-
-    if tplregistrationName == 'spm':
-        pass
-        #import
-        #coregistertemplate = pe.Node(
-                #spm.Coregister(**config_dict['tplregistration']['coregister__param']),
-                #'coregistertemplate')
-
-    else:
-        msg = "'{}' is not implemented for the t1registration workflow"
-        print msg.format(tplregistrationName)
-
+    # Template registration
+    from workflows.registration import Registration
+    tplregistration = Registration(config_dict['tplregistration'],
+                                   'tplregistration')
+    tplregistration.implement(main_wf)
+    '''
 
     # Segmentation
-    segmentationName = config_dict['segmentation']['name']
-
-    if segmentationName == 'spm':
-        #import
-        from workflows.segmentation import segmentation_spm
-        segmentation = segmentation_spm(config_dict['segmentation'])
-        #connect
-        main_wf.connect([
-            (t1registration, segmentation,
-                [('gunzip.out_file', 'newsegment.channel_files')]),
-            (segmentation, datasink,
-                [('merge.merged_file', 'segmentation')]),
-            ])
-
-    else:
-        msg = "'{}' is not implemented for the segmentation workflow"
-        print msg.format(segmentationName)
-
+    from workflows.segmentation import Segmentation
+    segmentation = Segmentation(config_dict['segmentation'],
+                                    'Segmentation')
+    segmentation.implement(main_wf)
 
     # SUVR
-    if config_dict['suvr']['cerebellar']:
-        #import
-        from workflows.suvr import suvr_cerebellar
-        suvr_wf = suvr_cerebellar()
-        #connect
-        main_wf.connect([
-            (selectfiles, suvr_wf, [
-                ('aparcaseg', 'pickatlas.atlas'),
-                ('aparcaseg', 'segstats.segmentation_file'),
-                ]),
-            (t1registration, suvr_wf,
-                [('coregister.coregistered_source', 'suvrcalc.in_file')]),
-            (suvr_wf, datasink, [
-                ('pickatlas.mask_file', 'suvr.@cerebellarmask'),
-                ('suvrcalc.out_file', 'suvr.@suvr'),
-                ('segstats.summary_file', 'suvr.@segstats'),
-                ]),
-            ])
+    from workflows.suvr import Suvr
+    suvr = Suvr(config_dict['suvr'], 'suvr')
+    suvr.implement(main.wf)
 
-    if config_dict['suvr']['whitematter']:
-        pass
-
-
+    '''
     # Simple brainmask for visu
     from nipype.interfaces.fsl.maths import UnaryMaths
     brainmask = pe.Node(UnaryMaths(operation='bin'), 'brainmask')
