@@ -23,7 +23,8 @@ class Preparation(WorkflowManager):
 
         main_wf.connect([
             (petfiles, self._wf, [('frametimes', 'sortframes.frametimes')]),
-            (fssource, self._wf, [('T1', 'mriconvert.in_file')]),
+            (fssource, self._wf, [('T1', 't1convert.in_file')]),
+            (fssource, self._wf, [('aseg', 'asegconvert.in_file')]),
             ])
 
 
@@ -39,13 +40,15 @@ class Preparation(WorkflowManager):
 
         sortframes = Node(SortFrames(origin='UCD'), 'sortframes')
 
-        mriconvert = Node(MRIConvert(out_type='nii'), 'mriconvert')
+        t1convert = Node(MRIConvert(out_type='nii'), 't1convert')
+        asegconvert = Node(MRIConvert(out_type='niigz'), 'asegconvert')
 
         wf = Workflow(self.name)
 
         wf.add_nodes([
             sortframes,
-            mriconvert,
+            t1convert,
+            asegconvert,
             ])
 
         return wf

@@ -86,6 +86,9 @@
             "whitematter": [2, 41]
         }
     },
+    "qa": {
+        "kind": "classic"
+    },
     "pvc": {
         "kind": "",
         "params": {

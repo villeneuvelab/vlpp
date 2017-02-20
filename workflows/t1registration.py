@@ -27,14 +27,14 @@ class T1registration(WorkflowManager):
 
         main_wf.connect([
             (preparation, self._wf,
-                [('mriconvert.out_file', 'coregister.target')]),
+                [('t1convert.out_file', 'coregister.target')]),
             (realign, self._wf, [
                 ('calcmean50to70.out_file', 'coregister.source'),
                 ('tile_data.realigned_files', 'coregister.apply_to_files'),
                 ]),
             (self._wf, datasink, [
-                ('coregister.coregistered_source', 't1registration'),
-                ('coregister.coregistered_files', 'co_file'),
+                ('coregister.coregistered_source', 'T1registration.@source'),
+                ('coregister.coregistered_files', 'T1registration.@files'),
                 ]),
             ])
 

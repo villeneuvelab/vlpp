@@ -123,14 +123,12 @@ def main_wf(config_dict):
     suvr = Suvr(config_dict['suvr'], 'Suvr')
     suvr.implement(main_wf)
 
+    # QA
+    from workflows.qa import Qa
+    qa = Qa(config_dict['qa'], 'Qa')
+    qa.implement(main_wf)
+
     '''
-    # Simple brainmask for visu
-    from nipype.interfaces.fsl.maths import UnaryMaths
-    brainmask = pe.Node(UnaryMaths(operation='bin'), 'brainmask')
-    main_wf.connect([
-        (selectfiles, brainmask, [('aparcaseg', 'in_file')]),
-        (brainmask, datasink, [('out_file', 'brainmask')]),
-        ])
 
 
     # Visualization

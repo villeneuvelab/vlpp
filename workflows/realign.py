@@ -32,11 +32,11 @@ class Realign(WorkflowManager):
                 ('sortframes.durations', 'calcmean50to70.durations'),
                 ]),
             (self._wf, datasink, [
-                ('calcmean5.out_file', 'realign.@mean5'),
-                ('calcmean50to70.out_file', 'realign.@mean50to70'),
-                ('tile_data.realigned_files', 'realign.@realigned_files'),
-                ('tile_data.realignment_parameters', 'realign.@tparameters'),
-                ('realign.realignment_parameters', 'realign.@parameters'),
+                ('calcmean5.out_file', 'Realign.@mean5'),
+                ('calcmean50to70.out_file', 'Realign.@mean50to70'),
+                ('tile_data.realigned_files', 'Realign.@realigned_files'),
+                ('tile_data.realignment_parameters', 'Realign.@tparameters'),
+                ('realign.realignment_parameters', 'Realign.@parameters'),
                 ]),
             ])
 

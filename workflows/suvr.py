@@ -31,9 +31,9 @@ class Suvr(WorkflowManager):
             (t1registration, self._wf,
                 [('coregister.coregistered_source', 'suvrcalc.in_file')]),
             (self._wf, datasink, [
-                ('pickatlas.mask_file', 'suvr.@mask'),
-                ('suvrcalc.out_file', 'suvr.@suvr'),
-                ('segstats.summary_file', 'suvr.@stats'),
+                ('pickatlas.mask_file', 'SUVr.@mask'),
+                ('suvrcalc.out_file', 'SUVr.@suvr'),
+                ('segstats.summary_file', 'SUVr.@stats'),
                 ]),
             ])
 

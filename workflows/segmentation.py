@@ -26,9 +26,9 @@ class Segmentation(WorkflowManager):
 
         main_wf.connect([
             (preparation, self._wf,
-                [('mriconvert.out_file', 'newsegment.channel_files')]),
+                [('t1convert.out_file', 'newsegment.channel_files')]),
             (self._wf, datasink,
-                [('merge.merged_file', 'segmentation')]),
+                [('merge.merged_file', 'Segmentation')]),
             ])
 
 
