@@ -24,10 +24,13 @@ class Realign(WorkflowManager):
 
         main_wf.connect([
             (petfiles, self._wf, [('petframes', 'gunzip.in_file')]),
-            (preparation, self._wf, [('sortframes.ind5', 'calcmean5.indices')]),
-            (preparation, self._wf, [('sortframes.ind5', 'merge_mean.indices')]),
-            (preparation, self._wf,
-                [('sortframes.ind50to70', 'calcmean50to70.indices')]),
+            (preparation, self._wf, [
+                ('sortframes.ind5', 'calcmean5.indices'),
+                ('sortframes.durations', 'calcmean5.durations'),
+                ('sortframes.ind5', 'merge_mean.indices'),
+                ('sortframes.ind50to70', 'calcmean50to70.indices'),
+                ('sortframes.durations', 'calcmean50to70.durations'),
+                ]),
             (self._wf, datasink, [
                 ('calcmean5.out_file', 'realign.@mean5'),
                 ('calcmean50to70.out_file', 'realign.@mean50to70'),

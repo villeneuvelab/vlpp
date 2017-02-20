@@ -80,9 +80,11 @@
         "newsegment": {}
     },
     "suvr": {
-        "kind": "",
-        "cerebellar": true,
-        "whitematter": false
+        "kind": "50to70",
+        "labels": {
+            "cerebellar": [8, 47],
+            "whitematter": [2, 41]
+        }
     },
     "pvc": {
         "kind": "",

@@ -119,8 +119,8 @@ def main_wf(config_dict):
 
     # SUVR
     from workflows.suvr import Suvr
-    suvr = Suvr(config_dict['suvr'], 'suvr')
-    suvr.implement(main.wf)
+    suvr = Suvr(config_dict['suvr'], 'Suvr')
+    suvr.implement(main_wf)
 
     '''
     # Simple brainmask for visu

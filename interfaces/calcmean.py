@@ -15,6 +15,10 @@ class CalcMeanInputSpec(BaseInterfaceInputSpec):
             File(exists=True),
             desc='List of frames',
             mandatory=True)
+    durations = traits.List(
+            traits.Float,
+            desc='Durations of each frames to compute weighted average',
+            mandatory=False)
     indices = traits.List(
             traits.Int,
             desc='List of indices of frames to mean',
@@ -35,11 +39,15 @@ class CalcMean(BaseInterface):
 
     def _run_interface(self, runtime):
         frames = np.array(self.inputs.in_files)
+        durations = np.array(self.inputs.durations)
         ind = self.inputs.indices
         tag = self.inputs.tag
         mean_method = self.inputs.mean_method
 
-        if isdefined(ind): frames = frames[ind]
+        if isdefined(self.inputs.indices):
+            frames = frames[ind]
+            if isdefined(self.inputs.durations):
+                durations = durations[ind]
 
         _, base, ext = split_filename(frames[0])
         self._out_file = opa('{}_mean{}{}'.format(base, tag, ext))
@@ -63,7 +71,7 @@ def make_mean(niftilist, target, mean_method):
         print(msg.format(mean_method))
 
 
-def make_mean_spm(niftilist, target):
+def make_mean_spm(niftilist, target, durations=None):
     """
     Given a list of nifti files, generates a mean image
     """
@@ -80,13 +88,13 @@ def make_mean_spm(niftilist, target):
     ind = (rtmp > 0) & (rtmp2 > 0)
     ind4d = np.tile(ind, [n_images,1,1,1])
     newdatMask = np.ma.MaskedArray(newdat, ~ind4d)
-    newdatMean = np.mean(newdatMask, 0)
+    newdatMean = np.mean(newdatMask, 0, durations)
     newimg = nb.Nifti1Image(newdatMean, affine, header)
     newimg.to_filename(target)
     return target
 
 
-def make_mean_python(niftilist, target):
+def make_mean_python(niftilist, target, durations=None):
     """
     Given a list of nifti files, generates a mean image
     """
@@ -97,7 +105,7 @@ def make_mean_python(niftilist, target):
     newdat = np.zeros([n_images] + list(shape))
     for i, item in enumerate(niftilist):
         newdat[i] += nb.load(item).get_data().copy()
-    newdat = np.mean(newdat, 0)
+    newdat = np.mean(newdat, 0, durations)
     newdat = np.nan_to_num(newdat)
     newimg = nb.Nifti1Image(newdat, affine, header)
     newimg.to_filename(target)

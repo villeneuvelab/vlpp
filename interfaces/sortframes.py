@@ -26,6 +26,8 @@ class SortFramesOutputSpec(TraitedSpec):
             traits.Int, desc='All frames except first 5 minutes')
     ind50to70 = traits.List(
             traits.Int, desc='List of 50 to 70 minutes frames')
+    durations = traits.List(
+            traits.Float, desc='Durations of each frames')
 
 
 class SortFrames(BaseInterface):
@@ -45,6 +47,7 @@ class SortFrames(BaseInterface):
         self._indnot5 = np.where(stopTime > 5.*60)[0]
         #self.ind20 = stopTime <= 20.*60
         self._ind50to70 = np.where((startTime>=50.*60) & (stopTime<=70.*60))[0]
+        self._durations = duration
 
         return runtime
 
@@ -53,6 +56,7 @@ class SortFrames(BaseInterface):
         outputs['ind5'] = self._ind5.tolist()
         outputs['indnot5'] = self._indnot5.tolist()
         outputs['ind50to70'] = self._ind50to70.tolist()
+        outputs['durations'] = self._durations.tolist()
         return outputs
 
 
