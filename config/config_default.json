@@ -1,16 +1,27 @@
 {
+    "arguments": {
+        "pet_dir": "",
+        "fs_dir": "",
+        "subject_id": "",
+        "output_dir": "",
+        "working_dir": ""
+    },
     "selectfiles": {
-        "freesurfer": "freesurfer",
-        "petfiles": {
-            "frametimes": "frametimes*.csv",
-            "petframes": "{subject_id}_PIB_frame*.nii.gz"
-        }
+        "frametimes": "frametimes*.csv",
+        "petframes": "{subject_id}_PIB_frame*.nii.gz"
     },
     "preparation": {
         "kind": "UCD"
     },
+    "smoothing": {
+        "fwhm": [6]
+    },
     "realign": {
         "kind": "UCD",
+        "split": {
+            "dimension": "t",
+            "output_type": "NIFTI"
+        },
         "realign_param": {
             "register_to_mean": true,
             "quality": 0.9000,
@@ -86,8 +97,38 @@
             "whitematter": [2, 41]
         }
     },
+    "segstats": {
+        "labels": {
+            "pibindex_Lfrontal": [1003,1012,1014,1018,1019,1020,1027,1028,1032],
+            "pibindex_Ltemporal": [1009,1015,1030],
+            "pibindex_Lparietal": [1008,1025,1029,1031],
+            "pibindex_Lcingulate": [1002,1023,1010,1026],
+            "pibindex_Rfrontal": [2003,2012,2014,2018,2019,2020,2027,2028,2032],
+            "pibindex_Rtemporal": [2009,2015,2030],
+            "pibindex_Rparietal": [2008,2025,2029,2031],
+            "pibindex_Rcingulate": [2002,2023,2010,2026],
+            "pibindex_Ltemporal_noIT": [1015,1030],
+            "pibindex_Rtemporal_noIT": [2015,2030],
+            "PIBINDEX_noIT": [1003,1012,1014,1018,1019,1020,1027,1028,1032,1008,1025,1029,1031,1002,1023,1010,1026,2003,2012,2014,2018,2019,2020,2027,2028,2032,2008,2025,2029,2031,2002,2023,2010,2026,1015,1030,2015,2030],
+            "PIBINDEX": [1003,1012,1014,1018,1019,1020,1027,1028,1032,1008,1025,1029,1031,1002,1023,1010,1026,2003,2012,2014,2018,2019,2020,2027,2028,2032,2008,2025,2029,2031,2002,2023,2010,2026,1015,1030,2015,2030,2009,1009],
+            "MediaPFC": [1014,2014,1028,2028,1026,2026,1002,2002],
+            "Left-Thalamus": [10]
+        }
+    },
     "qa": {
-        "kind": "classic"
+        "kind": "classic",
+        "rgb": {
+            "colormap": "jet",
+            "dimension": 3,
+            "minimum_input": 0,
+            "maximum_input": 2
+        },
+        "mosaic": {
+            "alpha_value": 0.5,
+            "flip_slice": "1x1",
+            "pad_or_crop": "mask",
+            "output_image": "output.jpg"
+        }
     },
     "pvc": {
         "kind": "",

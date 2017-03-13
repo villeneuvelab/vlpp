@@ -15,15 +15,17 @@ class Realign(WorkflowManager):
         if self.kind == 'UCD':
             self._wf = self._UCD()
         else:
-            self.implement_error()
+            self._wf = self._MNI()
+            #self.implement_error()
 
     def connect(self, main_wf):
-        petfiles = main_wf.get_node('petfiles')
+        #petfiles = main_wf.get_node('petfiles')
         preparation = main_wf.get_node('Preparation')
         datasink = main_wf.get_node('datasink')
 
-        main_wf.connect([
-            (petfiles, self._wf, [('petframes', 'gunzip.in_file')]),
+        main_wf.connect(
+            #(petfiles, self._wf, [('petframes', 'gunzip.in_file')]),
+            (preparation, self._wf, [('petconvert', 'split.in_file')]),
             (preparation, self._wf, [
                 ('sortframes.ind5', 'calcmean5.indices'),
                 ('sortframes.durations', 'calcmean5.durations'),
@@ -39,6 +41,16 @@ class Realign(WorkflowManager):
                 ('realign.realignment_parameters', 'Realign.@parameters'),
                 ]),
             ])
+
+
+    def _MNI(self):
+        from nipype.interfaces.fsl.utils import Split
+        from interfaces.calcmean import CalcMean
+
+        split = Node(Split(**self.config['split']), 'split')
+
+        calcmean = Node(CalcMean(), 'calcmean')
+        calcmean.inputs.tag = 'target'
 
 
     def _UCD(self):
@@ -69,10 +81,10 @@ class Realign(WorkflowManager):
             np.savetxt(output_rp_name, output_rp, fmt='%.7e')
             return output_rf, output_rp_name
 
-        gunzip = MapNode(Gunzip(), name='gunzip', iterfield=['in_file'])
+        #gunzip = MapNode(Gunzip(), name='gunzip', iterfield=['in_file'])
 
         calcmean5 = Node(CalcMean(**self.config['calcmean_param']), 'calcmean5')
-        calcmean5.inputs.tag= '5'
+        calcmean5.inputs.tag = '5'
 
         merge_mean = Node(Function(input_names=['in_files', 'indices', 'mean'],
                                   output_names=['out_files', 'length'],

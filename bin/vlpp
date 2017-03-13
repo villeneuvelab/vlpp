@@ -48,19 +48,32 @@ def get_arguments():
 
     parser.add_argument(
             '-c', '--config_file',
-            required=False,
+            required=True,
             help='Path to a json config file. The default will be load if not specified.',
             )
 
+    """
     parser.add_argument(
-            '-i', '--input_dir',
+            '-p', '--pet_dir',
+            required=False,
+            help='PET data directory of one subject.',
+            )
+
+    parser.add_argument(
+            '-f', '--fs_dir',
+            required=False,
+            help='Freesurfer data directory of one subject.',
+            )
+
+    parser.add_argument(
+            '-s', '--subject_id',
             required=True,
-            help='Input data directory of one subject.',
+            help='PET data directory of one subject.',
             )
 
     parser.add_argument(
             '-o', '--output_dir',
-            required=True,
+            required=False,
             help='Output data directory.',
             )
 
@@ -69,6 +82,7 @@ def get_arguments():
             required=False,
             help='Working data directory.',
             )
+    """
 
     parser.add_argument(
             '-d', '--debug',

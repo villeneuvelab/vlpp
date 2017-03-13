@@ -59,7 +59,17 @@ class WorkflowManager(object):
 
     @property
     def kind(self):
-        return self._config['kind']
+        if 'kind' in self._config:
+            return self._config['kind']
+        else:
+            return 'default'
+
+    @property
+    def ignore(self):
+        if 'ignore' in self._config:
+            return self._config['ignore']
+        else:
+            return False
 
     @property
     def wf(self):

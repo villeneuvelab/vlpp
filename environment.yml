@@ -3,3 +3,5 @@ dependencies:
     - python=3.4
     - nipype=0.12.1
     - graphviz
+    - matplotlib=2.0.0
+    - Jinja2=2.8

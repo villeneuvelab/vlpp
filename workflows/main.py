@@ -20,11 +20,9 @@ def main_wf(config_dict):
     output_dir = config_dict['arguments']['output_dir']
     working_dir = config_dict['arguments']['working_dir']
     user_debug = config_dict['arguments']['debug']
-    #subject_list = [config_dict['arguments']['subject_id']]
+    pet_dir = config_dict['arguments']['pet_dir']
+    fs_dir = config_dict['arguments']['fs_dir']
     subject_id = config_dict['arguments']['subject_id']
-    input_dir = config_dict['arguments']['input_dir']
-    templates = config_dict['selectfiles']['petfiles']
-    fssource_subject_id = config_dict['selectfiles']['freesurfer']
 
 
     # Directories
@@ -50,29 +48,32 @@ def main_wf(config_dict):
     infields = ['subject_id']
     infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
     infosource.inputs.subject_id = subject_id
-    #infosource.iterables = [
-            #('subject_id', subject_list),
-            #]
 
 
     # PET Files
+    templates = {
+        "frametimes": "",
+        "petframes": "",
+        }
+    templates.update(config_dict['selectfiles'])
     petfiles = pe.Node(nio.SelectFiles(templates), 'petfiles')
-    petfiles.inputs.base_directory = input_dir
+    petfiles.inputs.base_directory = pet_dir
     petfiles.inputs.sort_filelist = True
     #petfiles.inputs.raise_on_empty = False
 
 
     # Freesurfer source
     fssource = pe.Node(nio.FreeSurferSource(), 'fssource')
-    fssource.inputs.subjects_dir = input_dir
-    fssource.inputs.subject_id = fssource_subject_id
+    fssource.inputs.subjects_dir = os.path.dirname(fs_dir)
+    fssource.inputs.subject_id = os.path.basename(fs_dir)
 
 
     # Datasink
     datasink = pe.Node(nio.DataSink(), 'datasink')
     datasink.inputs.base_directory = output_dir
     substitutions = [
-            ('_subject_id_', '')
+            ('_subject_id_', ''),
+            ('_fwhm_6', ''),
             ]
     datasink.inputs.substitutions = substitutions
 
@@ -93,10 +94,17 @@ def main_wf(config_dict):
     preparation = Preparation(config_dict['preparation'], 'Preparation')
     preparation.implement(main_wf)
 
+    ## Smoothing
+    from workflows.smoothing import Smoothing
+    smoothing = Smoothing(config_dict['smoothing'], 'Smoothing')
+    smoothing.implement(main_wf)
+
+    '''
     ## Realign
     from workflows.realign import Realign
     realign = Realign(config_dict['realign'], 'Realign')
     realign.implement(main_wf)
+    '''
 
     ## T1 registration
     from workflows.t1registration import T1registration
@@ -123,49 +131,17 @@ def main_wf(config_dict):
     suvr = Suvr(config_dict['suvr'], 'Suvr')
     suvr.implement(main_wf)
 
+    # Segstats
+    from workflows.segstats import Segstats
+    segstats = Segstats(config_dict['segstats'], 'Segstats')
+    segstats.implement(main_wf)
+
     # QA
     from workflows.qa import Qa
     qa = Qa(config_dict['qa'], 'Qa')
     qa.implement(main_wf)
 
     '''
-
-
-    # Visualization
-    #from workflows.visualization import mosaic_wf
-    #mosaic_cereb = mosaic_wf()
-
-    from nipype.pipeline.engine import Node, Workflow
-    from nipype.interfaces.ants.visualization import \
-            ConvertScalarImageToRGB, CreateTiledMosaic
-
-
-    rgb = pe.Node(ConvertScalarImageToRGB(), 'rgb')
-    rgb.inputs.colormap = 'jet' #colormap
-    rgb.inputs.dimension = 3 #dimension
-    rgb.inputs.minimum_input = 0 #minimum_input
-    rgb.inputs.maximum_input = 2 #maximum_input
-    #rgb.inputs.input_image = '/home/chris/Projets/Sylvia/data/derivatives/pipeline_working_dir/PIPELINENAME/SUVR/_subject_id_B12-303/pickatlas/B12-303_aparc_aseg_mask.nii.gz'
-    #rgb.inputs.custom_color_map_file = '/home/chris/local/toad/templates/lookup_tables/FreeSurferColorLUT_ItkSnap.txt'
-
-    mosaic = pe.Node(CreateTiledMosaic(), 'createTiledMosaic')
-    mosaic.inputs.alpha_value = 0.5
-    mosaic.inputs.flip_slice = '1x1'
-    mosaic.inputs.pad_or_crop = 'mask'
-    mosaic.inputs.output_image = 'output.jpg'
-    #mosaic.inputs.input_image = '/home/chris/Projets/Sylvia/data/derivatives/pipeline_working_dir/PIPELINENAME/SUVR/_subject_id_B12-303/suvrcalc/rrB12-303_PIB_frame0030_mean_suvr.nii'
-    #createTiledMosaic.mask_image = ''
-
-    """
-    main_wf.connect([
-        (suvr_wf, rgb, [('pickatlas.mask_file', 'input_image')]),
-        (suvr_wf, mosaic, [('suvrcalc.out_file', 'input_image')]),
-        (brainmask, mosaic, [('out_file', 'mask_image')]),
-        (rgb, mosaic, [('output_image', 'rgb_image')]),
-        (mosaic, datasink, [('output_image', 'mosaic')]),
-        ])
-    """
-
     #PVC
     from interfaces.petpvc import PETPVC
     petpvc = pe.Node(

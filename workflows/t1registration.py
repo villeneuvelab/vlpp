@@ -22,40 +22,44 @@ class T1registration(WorkflowManager):
 
     def connect(self, main_wf):
         preparation = main_wf.get_node('Preparation')
-        realign = main_wf.get_node('Realign')
+        #realign = main_wf.get_node('Realign')
+        smoothing = main_wf.get_node('Smoothing')
         datasink = main_wf.get_node('datasink')
 
         main_wf.connect([
             (preparation, self._wf,
                 [('t1convert.out_file', 'coregister.target')]),
-            (realign, self._wf, [
-                ('calcmean50to70.out_file', 'coregister.source'),
-                ('tile_data.realigned_files', 'coregister.apply_to_files'),
+            #(realign, self._wf, [
+                #('calcmean50to70.out_file', 'coregister.source'),
+                #('tile_data.realigned_files', 'coregister.apply_to_files'),
+                #]),
+            (smoothing, self._wf, [
+                ('meanimage.out_file', 'gunzip.in_file'),
                 ]),
             (self._wf, datasink, [
                 ('coregister.coregistered_source', 'T1registration.@source'),
-                ('coregister.coregistered_files', 'T1registration.@files'),
+                #('coregister.coregistered_files', 'T1registration.@files'),
                 ]),
             ])
 
 
     def _spm(self):
-        #from nipype.algorithms.misc import Gunzip
+        from nipype.algorithms.misc import Gunzip
         from nipype.interfaces.spm import Coregister
         from nipype.pipeline.engine import Node, Workflow
 
-        #gunzip = Node(Gunzip(), 'gunzip')
+        gunzip = Node(Gunzip(), 'gunzip')
 
         coregister= Node(Coregister(**self.config['coregister_param']),
                                     'coregister')
 
         wf = Workflow(self.name)
 
-        wf.add_nodes([coregister])
+        #wf.add_nodes([coregister])
 
-        #wf.connect([
-            #(gunzip, coregister, [('out_file', 'target')]),
-            #])
+        wf.connect([
+            (gunzip, coregister, [('out_file', 'source')]),
+            ])
 
         return wf
 
