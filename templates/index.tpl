@@ -52,7 +52,7 @@
 {% endfor %}
     <hr>
 
-    <p class="small text-muted">Built with &#9829; by Christophe and <a href="https://keen.io">Keen IO</a></p>
+    <!--p class="small text-muted">Built with &#9829; by Christophe and <a href="https://keen.io">Keen IO</a></p-->
 
   </div>
 

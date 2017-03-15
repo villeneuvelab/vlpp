@@ -20,9 +20,13 @@ class Smoothing(WorkflowManager):
 
     def connect(self, main_wf):
         preparation = main_wf.get_node('Preparation')
+        datasink = main_wf.get_node('datasink')
 
         main_wf.connect([
             (preparation, self._wf, [('petconvert.out_file', 'smooth.in_file')]),
+            (self._wf, datasink, [
+                ('meanimage.out_file', 'Smoothing.@pet'),
+                ]),
             ])
 
 

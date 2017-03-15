@@ -26,6 +26,10 @@ conda env create -f environment.yml
 
 ## Launch
 
+## Output
+
+### scratch directory
+
 ## Informations
 
 Developer and maintainer: *Christophe Bedetti*

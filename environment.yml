@@ -5,3 +5,4 @@ dependencies:
     - graphviz
     - matplotlib=2.0.0
     - Jinja2=2.8
+    - pandas=0.19.2

@@ -35,11 +35,14 @@ class Mosaic(BaseInterface):
         contour_file = self.inputs.contour_file
         overlay_file = self.inputs.overlay_file
         cmap = self.inputs.cmap
-        postfix = self.inputs.postfix
+        if isdefined(self.inputs.postfix):
+            postfix = "_{}".format(self.inputs.postfix)
+        else:
+            postfix = ""
 
         _, name, _ = split_filename(in_file)
-        self._mosaic_file_path = opa('{}_mosaic_{}.png'.format(name, postfix))
-        self._html_file_path = opa('{}_mosaic_{}.html'.format(name, postfix))
+        self._mosaic_file_path = opa('{}_mosaic{}.png'.format(name, postfix))
+        self._html_file_path = opa('{}_mosaic{}.html'.format(name, postfix))
 
         result = mosaic.Mosaic(in_file)
         if isdefined(mask_file): result.mask = mask_file

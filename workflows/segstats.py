@@ -33,8 +33,9 @@ class Segstats(WorkflowManager):
                 ('suvrcalc.out_file', 'roistats.in_file'),
                 ]),
             (self._wf, datasink, [
-                ('segstats.summary_file', 'Segstats.@stats'),
-                ('roistats.out_file', 'Segstats.@roistats'),
+                #('segstats.summary_file', 'Segstats.@stats'),
+                #('roistats.out_file', 'Segstats.@roistats'),
+                ('mergeNode.stats', 'Segstats.@stats'),
                 ]),
             ])
 
@@ -46,16 +47,18 @@ class Segstats(WorkflowManager):
         from nipype.interfaces.utility import Function
         from nipype.pipeline.engine import MapNode, JoinNode, Node, Workflow
 
-        '''
-        pickatlas = Node(PickAtlas(), name='pickatlas')
-        pickatlas.iterables = ('labels', list(labels.values()))
-                #iterfield=['labels', 'output_file'])
-                iterfield=['labels'])
-                    labels=tuple(labels.values()),
-        pickatlas = Node(
-                PickAtlas(labels=self.config['labels']['cerebellar']),
-                name='pickatlas')
-        '''
+        def merge(roistats, stats):
+            from os.path import abspath as opa
+            import pandas
+            output = opa('merged_stats.csv')
+            roiData = pandas.read_csv(roistats)
+            data = pandas.read_csv(
+                    stats, delim_whitespace=True, comment="#",
+                    usecols=[4, 5, 6, 7, 8, 9], names=roiData.columns.values)
+            mergeData = roiData.append(data)
+            mergeData.to_csv(output)
+            return output
+
 
         roistats = Node(RoiStats(labels=self.config['labels']), 'roistats')
 
@@ -68,17 +71,21 @@ class Segstats(WorkflowManager):
                 name='segstats',
                 )#iterfied=['in_file'])
 
+        mergeNode = Node(Function(
+                    input_names=['roistats', 'stats'], output_names=['stats'],
+                    function=merge), 'mergeNode')
+
         # Workflow
         wf = Workflow(self.name)
 
-        wf.add_nodes([
-            segstats,
-            roistats,
-            ])
-        #wf.connect([
-            #(pickatlas, roistats, [('mask_file', 'roi_file')]),
-            #(roistats, csv, [('stat', 'stats')]),
+        #wf.add_nodes([
+            #segstats,
+            #roistats,
             #])
+        wf.connect([
+            (roistats, mergeNode, [('out_file', 'roistats')]),
+            (segstats, mergeNode, [('summary_file', 'stats')]),
+            ])
 
         return wf
 
