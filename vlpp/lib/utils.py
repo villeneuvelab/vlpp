@@ -3,7 +3,8 @@
 
 import json
 import os
-import sys
+from nipype.interfaces.utility import IdentityInterface
+from nipype.pipeline.engine import Node
 
 
 __PIPELINENAME__ = 'VLPP'
@@ -27,7 +28,11 @@ def print_json(data, msg=None):
     print(json.dumps(data, indent=4))
     print
 
+
 def get_subjects(input_dir):
+    """
+    Not used right now
+    """
     subject_list = []
     for fname in os.listdir(input_dir):
         path = os.path.join(input_dir, fname)
@@ -38,16 +43,22 @@ def get_subjects(input_dir):
     return subject_list
 
 
-def exit():
-    sys.exit()
-
-
 class WorkflowManager(object):
 
     def __init__(self, config, name):
         self._config = config
         self._name = name
+        self._inputnode = None
+        self._outputnode = None
         self._wf = None
+        self.infields = None
+        self.outfields = None
+
+    def setnodes(self):
+        self._inputnode = Node(
+                IdentityInterface(fields=self.infields), 'inputnode')
+        self._outputnode = Node(
+                IdentityInterface(fields=self.outfields), 'outputnode')
 
     @property
     def config(self):
@@ -55,7 +66,12 @@ class WorkflowManager(object):
 
     @property
     def name(self):
-        return self._name
+        return self._name.title()
+
+    @property
+    def wf(self):
+        self.generate()
+        return self._wf
 
     @property
     def kind(self):
@@ -65,28 +81,37 @@ class WorkflowManager(object):
             return 'default'
 
     @property
-    def ignore(self):
-        if 'ignore' in self._config:
-            return self._config['ignore']
-        else:
-            return False
+    def inputnode(self):
+        return self._inputnode
 
     @property
-    def wf(self):
-        return self._wf
+    def outputnode(self):
+        return self._outputnode
 
     def generate(self):
+        """
+        Should be overwrite by the child and generate self._wf
+        """
         raise NotImplementedError
 
-    def connect(self, main_wf):
-        raise NotImplementedError
-
-    def implement(self, main_wf):
-        self.generate()
-        self.connect(main_wf)
-
-    def implement_error(self):
+    def error(self):
         #TODO implement this function with nipype error or logging ?
         msg = "'{}' is not implemented for the {} workflow"
         print(msg.format(self.kind, self.name))
+
+    @property
+    def ignore(self):
+        """
+        User can ignore a workflow when the key "ignore" is set to "True"
+        """
+        if 'ignore' in self._config:
+            value = self._config['ignore']
+            if isinstance(value, bool):
+                return value
+            else:
+                msg = "'{}' is not `bool`, workflow {} will be implemented"
+                print(msg.format(value, self.name))
+                return False
+        else:
+            return False
 

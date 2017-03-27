@@ -7,27 +7,24 @@ import os
 import shutil
 import sys
 
-APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(APP_DIR)
+#APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+#sys.path.append(APP_DIR)
 
-from lib import utils, validation
-import workflows.main
+from vlpp.lib import utils, validation
+from vlpp.vlpp import vlpp_wf
 
 
 def get_arguments():
-    """
-    """
+
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""
-            Consult the documentation at https://github.com/villeneuvelab/vlpp
             """,
             epilog="""
 
-            Please report bugs on github
+            Documentation at https://github.com/villeneuvelab/vlpp
+            Please report any issues there
 
-            Ex:
-                vlpp -i /home/chris/Projets/Sylvia/data/sourcedata/B12-303 -o
             """)
 
     parser.add_argument(
@@ -88,11 +85,11 @@ def main():
             )
 
     # Main workflow
-    main_wf = workflows.main.main_wf(argsValidated.config_dict)
+    wf = vlpp_wf(argsValidated.config_dict)
 
     # Graph
     #graph2use: 'orig', 'hierarchical' (default), 'flat', 'exec', 'colored'
-    main_wf.write_graph(graph2use='colored')
+    wf.write_graph(graph2use='colored')
     src = os.path.join(
             argsValidated.config_dict['arguments']['working_dir'],
             utils.__PIPELINENAME__,
@@ -102,7 +99,7 @@ def main():
             argsValidated.config_dict['arguments']['output_dir'])
 
     # Run
-    main_wf.run()
+    wf.run()
 
     config_run = {
             "plugin": "SGEGraph",
@@ -110,14 +107,15 @@ def main():
                 "qsub_args": "-l procs=12 -l walltime=1:00:00 -A yai-974-aa"
                 }
             }
-    #main_wf.run(plugin=PLUGIN_NAME, plugin_args=ARGS_DICT)
-    #main_wf.run(**config_run)
+    #wf.run(plugin=PLUGIN_NAME, plugin_args=ARGS_DICT)
+    #wf.run(**config_run)
 
     """
+    import subprocess
     try:
-        myfancypipeline()
+        wf.run()
     finally:
-        shutil.rmtree(tmpcrap, ignore_errors=True)
+        shutil.rmtree(tmpDir, ignore_errors=True)
         suprocess.call( ['rsync', '-a', myscratch, myhome])
         shutil.rmtree(myscratch)
     """

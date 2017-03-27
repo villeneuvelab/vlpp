@@ -2,7 +2,7 @@
 
 
 import os
-from lib import utils
+from . import utils
 
 
 class Validation(object):

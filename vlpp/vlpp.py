@@ -11,10 +11,10 @@ import nipype.interfaces.io as nio
 import nipype.interfaces.utility as niu
 import nipype.pipeline.engine as pe
 
-from lib import utils
+from .lib import utils
 
 
-def main_wf(config_dict):
+def vlpp_wf(config_dict):
 
     # Usefull variables
     output_dir = config_dict['arguments']['output_dir']
@@ -40,8 +40,8 @@ def main_wf(config_dict):
 
 
     # Main workflow
-    main_wf = pe.Workflow(name=utils.__PIPELINENAME__)
-    main_wf.base_dir = working_dir
+    wf = pe.Workflow(name=utils.__PIPELINENAME__)
+    wf.base_dir = working_dir
 
 
     # Infosource
@@ -79,75 +79,84 @@ def main_wf(config_dict):
 
 
     # General connections
-    main_wf.connect([
+    wf.connect([
         (infosource, petfiles, [[_] *2 for _ in infields]),
-        #(infosource, fssource, [[_] *2 for _ in infields]),
         #(infosource, datasink, [('subject_id', 'container')]),
         ])
-    main_wf.add_nodes([datasink, fssource])
+    wf.add_nodes([datasink, fssource])
 
 
     # Worflows
 
     ## Preparation
-    from workflows.preparation import Preparation
-    preparation = Preparation(config_dict['preparation'], 'Preparation')
-    preparation.implement(main_wf)
+    from .workflows.preparation import Preparation
+    _tag = 'preparation'
+    preparation = Preparation(config_dict[_tag], _tag).wf
 
-    ## Smoothing
-    from workflows.smoothing import Smoothing
-    smoothing = Smoothing(config_dict['smoothing'], 'Smoothing')
-    smoothing.implement(main_wf)
+    wf.connect([
+        #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
+        (petfiles, preparation, [('petframes', 'inputnode.petframes')]),
+        (fssource, preparation, [('T1', 'inputnode.anat')]),
+        (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
+        (preparation, datasink, [
+            ('outputnode.pet', 'Preparation.@pet'),
+            ('outputnode.anat', 'Preparation.@anat'),
+            ('outputnode.atlas', 'Preparation.@atlas'),
+            ]),
+        ])
+
+
 
     '''
+    ## Smoothing
+    from .workflows.smoothing import Smoothing
+    smoothing = Smoothing(config_dict['smoothing'], 'Smoothing')
+    smoothing.implement(wf)
+
     ## Realign
     from workflows.realign import Realign
     realign = Realign(config_dict['realign'], 'Realign')
-    realign.implement(main_wf)
-    '''
+    realign.implement(wf)
 
     ## T1 registration
-    from workflows.t1registration import T1registration
+    from .workflows.t1registration import T1registration
     t1registration = T1registration(config_dict['t1registration'],
                                     'T1registration')
-    t1registration.implement(main_wf)
+    t1registration.implement(wf)
 
-    '''
     # Template registration
     from workflows.registration import Registration
     tplregistration = Registration(config_dict['tplregistration'],
                                    'tplregistration')
-    tplregistration.implement(main_wf)
-    '''
+    tplregistration.implement(wf)
 
     # Segmentation
-    from workflows.segmentation import Segmentation
+    from .workflows.segmentation import Segmentation
     segmentation = Segmentation(config_dict['segmentation'],
                                     'Segmentation')
-    segmentation.implement(main_wf)
+    segmentation.implement(wf)
 
     # SUVR
-    from workflows.suvr import Suvr
+    from .workflows.suvr import Suvr
     suvr = Suvr(config_dict['suvr'], 'Suvr')
-    suvr.implement(main_wf)
+    suvr.implement(wf)
 
     # Segstats
-    from workflows.segstats import Segstats
+    from .workflows.segstats import Segstats
     segstats = Segstats(config_dict['segstats'], 'Segstats')
-    segstats.implement(main_wf)
+    segstats.implement(wf)
 
     # QA
-    from workflows.qa import Qa
+    from .workflows.qa import Qa
     qa = Qa(config_dict['qa'], 'Qa')
-    qa.implement(main_wf)
+    qa.implement(wf)
 
-    '''
     #PVC
     from interfaces.petpvc import PETPVC
     petpvc = pe.Node(
             PETPVC(**config_dict["pvc"]["params"]),
             'petpvc')
-    main_wf.connect([
+    wf.connect([
         (t1registration, petpvc, [('coregister.coregistered_source', 'in_file')]),
         (segmentation, petpvc, [('merge.merged_file', 'mask_file')]),
         ])
@@ -155,7 +164,7 @@ def main_wf(config_dict):
     #SUVR-PVC
     suvrpvc_wf = suvr_wf.clone(name='SUVR_PVC')
 
-    main_wf.connect([
+    wf.connect([
         (selectfiles, suvrpvc_wf, [
             ('aparcaseg', 'pickatlas.atlas'),
             ('aparcaseg', 'segstats.segmentation_file'),
@@ -169,7 +178,7 @@ def main_wf(config_dict):
             ]),
         ])
     '''
-    return main_wf
+    return wf
 
 def create_html():
     pass
