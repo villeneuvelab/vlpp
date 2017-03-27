@@ -142,10 +142,10 @@ class Qa(WorkflowManager):
             'holder': "dashboards/assets/lib/holderjs/holder.js",
             'keen': "dashboards/assets/lib/keen-js/dist/keen.min.js",
             'meta': "dashboards/assets/js/meta.js",
-            'bs': 'brainsprite.js/brainsprite.min.js',
+            'bs': 'brainsprite.js/assets/brainsprite.min.js',
             }),
             'assets')
-        assets.inputs.base_directory = '/home/chris/local'
+        assets.inputs.base_directory = '/sb/home/cbedetti/local'
 
         mosaicT1 = Node(Mosaic(cmap='gray'), 'mosaicT1')
         mosaicT1seg = Node(Mosaic(cmap='gray', postfix='T1seg'), 'mosaicT1seg')

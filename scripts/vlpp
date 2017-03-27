@@ -14,33 +14,17 @@ from lib import utils, validation
 import workflows.main
 
 
-# Importing nipype create a PowmInsecureWarning on guillimin
-if os.getenv("VILLENEUVE_SERVER") == "guillimin":
-    print("""\033[92m
-        PowmInsecureWarning on Guillimin server
-        This warning is known by the Calcul Québec team operating guillimin
-        \033[0m""")
-
-
 def get_arguments():
     """
     """
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""
-            Consult the documentation at {TBA}
+            Consult the documentation at https://github.com/villeneuvelab/vlpp
             """,
             epilog="""
-            An input directory should have the following structure
 
-                |input_dir
-                |-- SUBJECTID_frame000.nii.gz
-                |-- SUBJECTID_frame001.nii.gz
-                |-- ...
-                |-- SUBJECTID_frameXXX.nii.gz
-                |-- SUBJECTID_frametimes.csv
-
-            Please report bugs to christophe.bedetti@criugm.qc.ca
+            Please report bugs on github
 
             Ex:
                 vlpp -i /home/chris/Projets/Sylvia/data/sourcedata/B12-303 -o
@@ -119,6 +103,15 @@ def main():
 
     # Run
     main_wf.run()
+
+    config_run = {
+            "plugin": "SGEGraph",
+            "plugin_args": {
+                "qsub_args": "-l procs=12 -l walltime=1:00:00 -A yai-974-aa"
+                }
+            }
+    #main_wf.run(plugin=PLUGIN_NAME, plugin_args=ARGS_DICT)
+    #main_wf.run(**config_run)
 
     """
     try:

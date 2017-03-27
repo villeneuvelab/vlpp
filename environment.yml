@@ -1,4 +1,4 @@
-name: vlpp-env
+name: vlpp
 dependencies:
     - python=3.4
     - nipype=0.12.1

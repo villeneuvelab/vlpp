@@ -93,7 +93,7 @@
     "suvr": {
         "kind": "50to70",
         "labels": {
-            "cerebellar": [8, 47],
+            "cerebellar": [7, 8, 46, 47],
             "whitematter": [2, 41]
         }
     },

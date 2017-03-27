@@ -7,14 +7,14 @@ import glob
 import os
 
 
-DATA_DIR = '/home/chris/Projets/Pet-Pilot'
-output = os.path.join(DATA_DIR, 'roi_means_ref_gmcereb_subjects.csv')
+DATA_DIR = '/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
+output = os.path.join(DATA_DIR, 'roi_means_ref_cereb_subjects.csv')
 
 
 
 subjects = []
 datas = []
-for dataFile in glob.glob('{}/vlpp/*/Segstats/merged_stats.csv'.format(DATA_DIR)):
+for dataFile in glob.glob('{}/output/*/Segstats/merged_stats.csv'.format(DATA_DIR)):
     subjects.append(dataFile.split("/")[-3])
     datas.append(pandas.read_csv(dataFile))
 

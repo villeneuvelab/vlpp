@@ -2,6 +2,7 @@
 
 
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import nibabel as nb
 import numpy as np

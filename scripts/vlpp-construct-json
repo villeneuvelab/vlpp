@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+from jinja2 import Environment, FileSystemLoader
+import pandas as pd
+import os
+
+wd = '/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
+
+templateDir = os.path.join('/sb/home/cbedetti/local/vlpp', 'templates')
+jinja2Env = Environment(
+        loader=FileSystemLoader(templateDir),
+        trim_blocks=True,
+        )
+tpl = jinja2Env.get_template('subject.tpl')
+
+csvPath = wd + '/input_pilot_pet.csv'
+base = pd.read_csv(csvPath)
+
+pet_dir = "/sf1/project/yai-974-aa/PreventAD/raw_datasets/pet/"
+fs_dir = "/sf1/project/yai-974-aa/sylviav/McGill_data/Freesurfer/"
+
+for sub in base["subject_id"]:
+    sub_pet = base.loc[base['subject_id'] == sub, 'pet_dir'].iloc[0]
+    sub_fs = base.loc[base['subject_id'] == sub, 'fs_dir'].iloc[0]
+    tags = {
+            "subject_id": sub,
+            "pet_dir": pet_dir + sub_pet,
+            "fs_dir": fs_dir + sub_fs,
+            "output_dir": wd + "/output",
+            "working_dir":wd + "/working_dir",
+            }
+    jsonCode = tpl.render(**tags)
+
+    jsonFile = '{}/json/{}.json'.format(wd, sub)
+    if not os.path.exists(jsonFile):
+        with open(jsonFile, 'w') as f:
+            f.write(jsonCode)
+        print("json for " + sub + " created")
+    else:
+        print("json for " + sub + " already exists")
+
+

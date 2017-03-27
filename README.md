@@ -8,6 +8,8 @@
 - [spm](http://www.fil.ion.ucl.ac.uk/spm/)
 - [fsl](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
 - [freesurfer](https://surfer.nmr.mgh.harvard.edu/)
+- https://github.com/SIMEXP/brainsprite.js.git
+- https://github.com/keen/dashboards.git
 
 ### Python dependencies
 
