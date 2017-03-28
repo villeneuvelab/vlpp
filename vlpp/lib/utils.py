@@ -51,8 +51,9 @@ class WorkflowManager(object):
         self._inputnode = None
         self._outputnode = None
         self._wf = None
-        self.infields = None
-        self.outfields = None
+        self.setnodes()
+        #self.infields = None
+        #self.outfields = None
 
     def setnodes(self):
         self._inputnode = Node(

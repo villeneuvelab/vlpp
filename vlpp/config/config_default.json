@@ -11,9 +11,11 @@
         "petframes": "{subject_id}_PIB_frame*.nii.gz"
     },
     "preparation": {
+        "kind": "default",
         "ignore": false
     },
     "smoothing": {
+        "kind": "default",
         "fwhm": [6]
     },
     "realign": {

@@ -3,34 +3,27 @@
 """
 
 
-from lib.utils import WorkflowManager
+from ..lib.utils import WorkflowManager
 
 
 class Smoothing(WorkflowManager):
 
     def __init__(self, config, name):
+        self.infields = [
+                "pet",
+                ]
+        self.outfields = [
+                "pet",
+                ]
         WorkflowManager.__init__(self, config, name)
 
     def generate(self):
-        if self.kind == 'UCD':
-            self._wf = self._UCD()
+        if self.kind == 'default':
+            self._wf = self.default()
         else:
-            self._wf = self._UCD()
-            #self.implement_error()
+            self.error()
 
-    def connect(self, main_wf):
-        preparation = main_wf.get_node('Preparation')
-        datasink = main_wf.get_node('datasink')
-
-        main_wf.connect([
-            (preparation, self._wf, [('petconvert.out_file', 'smooth.in_file')]),
-            (self._wf, datasink, [
-                ('meanimage.out_file', 'Smoothing.@pet'),
-                ]),
-            ])
-
-
-    def _UCD(self):
+    def default(self):
         from nipype.interfaces.fsl.maths import MeanImage
         from nipype.interfaces.fsl.utils import Smooth
         from nipype.pipeline.engine import Node, Workflow
@@ -43,11 +36,9 @@ class Smoothing(WorkflowManager):
         wf = Workflow(self.name)
 
         wf.connect([
+            (self.inputnode, smooth, [('pet', 'in_file')]),
             (smooth, meanimage, [('smoothed_file', 'in_file')]),
+            (meanimage, self.outputnode, [('out_file', 'pet')]),
             ])
-
-        #wf.add_nodes([
-            #smooth,
-            #])
 
         return wf

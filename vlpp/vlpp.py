@@ -92,10 +92,9 @@ def vlpp_wf(config_dict):
     from .workflows.preparation import Preparation
     _tag = 'preparation'
     preparation = Preparation(config_dict[_tag], _tag).wf
-
     wf.connect([
         #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
-        (petfiles, preparation, [('petframes', 'inputnode.petframes')]),
+        (petfiles, preparation, [('petframes', 'inputnode.pet')]),
         (fssource, preparation, [('T1', 'inputnode.anat')]),
         (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
         (preparation, datasink, [
@@ -106,13 +105,17 @@ def vlpp_wf(config_dict):
         ])
 
 
-
-    '''
     ## Smoothing
     from .workflows.smoothing import Smoothing
-    smoothing = Smoothing(config_dict['smoothing'], 'Smoothing')
-    smoothing.implement(wf)
+    _tag = 'smoothing'
+    smoothing = Smoothing(config_dict[_tag], _tag).wf
+    wf.connect([
+        (preparation, smoothing, [('outputnode.pet', 'inputnode.pet')]),
+        (smoothing, datasink, [('outputnode.pet', 'Smoothing.@pet')]),
+        ])
 
+
+    '''
     ## Realign
     from workflows.realign import Realign
     realign = Realign(config_dict['realign'], 'Realign')
