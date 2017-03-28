@@ -10,16 +10,16 @@ from nipype.interfaces.base import BaseInterface, \
 from nipype.utils.filemanip import split_filename
 
 
-class SuvrCalcInputSpec(BaseInterfaceInputSpec):
+class InputSpec(BaseInterfaceInputSpec):
     in_file = File(exists=True, mandatory=True, desc='PET image')
     refmask_file = File(exists=True, mandatory=True, desc='Reference mask file')
 
-class SuvrCalcOutputSpec(TraitedSpec):
-    out_file = File(exists=True, desc='Standardized Uptake Value Ratio (SUVR)')
+class OutputSpec(TraitedSpec):
+    out_file = File(exists=True, desc='Standardized Uptake Value Ratio (SUVr)')
 
 class SuvrCalc(BaseInterface):
-    input_spec = SuvrCalcInputSpec
-    output_spec = SuvrCalcOutputSpec
+    input_spec = InputSpec
+    output_spec = OutputSpec
 
     def _run_interface(self, runtime):
         in_file = self.inputs.in_file

@@ -16,10 +16,12 @@
     },
     "smoothing": {
         "kind": "default",
+        "ignore": false,
         "fwhm": [6]
     },
     "realign": {
         "kind": "UCD",
+        "ignore": true,
         "split": {
             "dimension": "t",
             "output_type": "NIFTI"
@@ -41,6 +43,7 @@
     },
     "anatregistration": {
         "kind": "spm",
+        "ignore": false,
         "coregister_param": {
             "cost_function": "nmi",
             "fwhm": [7, 7],
@@ -67,6 +70,7 @@
     },
     "templateregistration": {
         "kind": "spm",
+        "ignore": false,
         "coregister_param": {
             "target": "",
             "cost_function": "nmi",
@@ -90,17 +94,24 @@
     },
     "segmentation": {
         "kind": "spm",
+        "ignore": false,
         "newsegment": {}
     },
     "suvr": {
-        "kind": "50to70",
-        "labels": {
-            "cerebellar": [7, 8, 46, 47],
-            "whitematter": [2, 41]
+        "kind": "default",
+        "ignore": false,
+        "pickatlas": {
+            "labels": {
+                "cerebellum_cortex": [8, 47],
+                "whole_cerebellum": [7, 8, 46, 47],
+                "whitematter": [2, 41]
+            }
         }
     },
-    "segstats": {
-        "labels": {
+    "statsrois": {
+        "kind": "default",
+        "ignore": false,
+        "userstats_labels": {
             "pibindex_Lfrontal": [1003,1012,1014,1018,1019,1020,1027,1028,1032],
             "pibindex_Ltemporal": [1009,1015,1030],
             "pibindex_Lparietal": [1008,1025,1029,1031],
@@ -113,12 +124,12 @@
             "pibindex_Rtemporal_noIT": [2015,2030],
             "PIBINDEX_noIT": [1003,1012,1014,1018,1019,1020,1027,1028,1032,1008,1025,1029,1031,1002,1023,1010,1026,2003,2012,2014,2018,2019,2020,2027,2028,2032,2008,2025,2029,2031,2002,2023,2010,2026,1015,1030,2015,2030],
             "PIBINDEX": [1003,1012,1014,1018,1019,1020,1027,1028,1032,1008,1025,1029,1031,1002,1023,1010,1026,2003,2012,2014,2018,2019,2020,2027,2028,2032,2008,2025,2029,2031,2002,2023,2010,2026,1015,1030,2015,2030,2009,1009],
-            "MediaPFC": [1014,2014,1028,2028,1026,2026,1002,2002],
-            "Left-Thalamus": [10]
+            "MediaPFC": [1014,2014,1028,2028,1026,2026,1002,2002]
         }
     },
     "qa": {
         "kind": "classic",
+        "ignore": false,
         "rgb": {
             "colormap": "jet",
             "dimension": 3,
@@ -133,8 +144,9 @@
         }
     },
     "pvc": {
-        "kind": "",
-        "params": {
+        "kind": "default",
+        "ignore": false,
+        "petpvc": {
             "fwhm_x": 6,
             "fwhm_y": 6,
             "fwhm_z": 6,

@@ -14,6 +14,22 @@ import nipype.pipeline.engine as pe
 from .lib import utils
 
 
+def compute_substitution(config):
+    rsl = []
+
+    rsl.append(('_subject_id_', ''))
+
+    for s in config["smoothing"]["fwhm"]:
+        val = "fwhm_{}".format(s)
+        rsl.append(("_{}".format(val), val))
+
+    for name, l in config["suvr"]["pickatlas"]["labels"].items():
+        in_str = "_labels_{}".format(".".join(map(str, l)))
+        rsl.append((in_str, name))
+
+    return rsl
+
+
 def main_workflow(config_dict):
 
     # Usefull variables
@@ -71,10 +87,7 @@ def main_workflow(config_dict):
     # Datasink
     datasink = pe.Node(nio.DataSink(), 'datasink')
     datasink.inputs.base_directory = output_dir
-    substitutions = [
-            ('_subject_id_', ''),
-            ('_fwhm_6', ''),
-            ]
+    substitutions = compute_substitution(config_dict)
     datasink.inputs.substitutions = substitutions
 
 
@@ -118,12 +131,14 @@ def main_workflow(config_dict):
 
 
     ## Realign
-    #from .workflows.realign import Realign
-    #_tag = 'realign'
-    #realign = Realign(config_dict[_tag], _tag).wf
-    realign = None
+    '''
+    from .workflows.realign import Realign
+    _tag = 'realign'
+    realign = Realign(config_dict[_tag], _tag).wf
     if realign is not None:
         pass
+    '''
+    realign = None
 
 
     ## PET and Anat registration
@@ -149,17 +164,18 @@ def main_workflow(config_dict):
 
         wf.connect([
             (preparation, anatreg, [('outputnode.anat', 'inputnode.anat')]),
-            (anatreg, datasink, [('outputnode.pet', 'AnatRegistration.@pet')]),
+            (anatreg, datasink, [('outputnode.pet', 'Anatregistration.@pet')]),
             ])
 
 
     ## Anat and Template registration
-    #from .workflows.tplreg import Tplreg
-    #_tag = 'templateregistration'
-    #tplreg = Tplreg(config_dict[_tag], _tag).wf
-    tplreg = None
+    '''
+    from .workflows.tplreg import Tplreg
+    _tag = 'templateregistration'
+    tplreg = Tplreg(config_dict[_tag], _tag).wf
     if tplreg is not None:
         pass
+    '''
 
 
     ## Segmentation
@@ -177,50 +193,74 @@ def main_workflow(config_dict):
             ])
 
 
-    '''
     # SUVR
     from .workflows.suvr import Suvr
-    suvr = Suvr(config_dict['suvr'], 'Suvr')
-    suvr.implement(wf)
+    _tag = 'suvr'
+    suvr = Suvr(config_dict[_tag], _tag).wf
+    if suvr is not None:
+        wf.connect([
+            (preparation, suvr, [('outputnode.atlas', 'inputnode.atlas')]),
+            (anatreg, suvr, [('outputnode.pet', 'inputnode.pet')]),
+            (suvr, datasink, [
+                ('outputnode.mask', 'Suvr.@mask'),
+                ('outputnode.suvr', 'Suvr.@suvr'),
+                ]),
+            ])
 
-    # Segstats
-    from .workflows.segstats import Segstats
-    segstats = Segstats(config_dict['segstats'], 'Segstats')
-    segstats.implement(wf)
 
+    # Statsrois
+    from .workflows.statsrois import Statsrois
+    _tag = 'statsrois'
+    statsrois = Statsrois(config_dict[_tag], _tag).wf
+    if statsrois is not None:
+        wf.connect([
+            (preparation, statsrois, [('outputnode.atlas', 'inputnode.atlas')]),
+            (suvr, statsrois, [('outputnode.suvr', 'inputnode.suvr')]),
+            (statsrois, datasink, [('outputnode.stats', 'Statsrois.@stats')]),
+            ])
+
+
+    '''
     # QA
     from .workflows.qa import Qa
     qa = Qa(config_dict['qa'], 'Qa')
     qa.implement(wf)
-
-    #PVC
-    from interfaces.petpvc import PETPVC
-    petpvc = pe.Node(
-            PETPVC(**config_dict["pvc"]["params"]),
-            'petpvc')
-    wf.connect([
-        (t1registration, petpvc, [('coregister.coregistered_source', 'in_file')]),
-        (segmentation, petpvc, [('merge.merged_file', 'mask_file')]),
-        ])
-
-    #SUVR-PVC
-    suvrpvc_wf = suvr_wf.clone(name='SUVR_PVC')
-
-    wf.connect([
-        (selectfiles, suvrpvc_wf, [
-            ('aparcaseg', 'pickatlas.atlas'),
-            ('aparcaseg', 'segstats.segmentation_file'),
-            ]),
-        (petpvc, suvrpvc_wf,
-            [('out_file', 'suvrcalc.in_file')]),
-        (suvrpvc_wf, datasink, [
-            ('pickatlas.mask_file', 'suvrpvc.@cerebellarmask'),
-            ('suvrcalc.out_file', 'suvrpvc.@suvr'),
-            ('segstats.summary_file', 'suvrpvc.@segstats'),
-            ]),
-        ])
     '''
-    return wf
 
-def create_html():
-    pass
+    # Partial Volume Correction
+    from .workflows.pvc import Pvc
+    _tag = 'pvc'
+    pvc = Pvc(config_dict[_tag], _tag).wf
+    pvc = None
+    if pvc is not None:
+        wf.connect([
+            (anatreg, pvc, [('outputnode.pet', 'inputnode.pet')]),
+            (segmentation, pvc, [('outputnode.seg', 'inputnode.seg')]),
+            (pvc, datasink, [('outputnode.petpvc', 'Petpvc.@petpvc')]),
+            ])
+
+
+    # PVC SUVr
+    pvcsuvr = suvr.clone(name='Pvcsuvr')
+    if pvc is not None:
+        wf.connect([
+            (preparation, pvcsuvr, [('outputnode.atlas', 'inputnode.atlas')]),
+            (pvc, pvcsuvr, [('outputnode.petpvc', 'inputnode.pet')]),
+            (pvcsuvr, datasink, [
+                ('outputnode.mask', 'PvcPetsuvr.@mask'),
+                ('outputnode.suvr', 'PvcPetsuvr.@suvr'),
+                ]),
+            ])
+
+
+    # PVC SUVr Statsrois
+    pvcstatsroi = statsrois.clone(name='PvcsuvrStatsrois')
+    if pvc is not None:
+        wf.connect([
+            (preparation, pvcstatsrois, [('outputnode.atlas', 'inputnode.atlas')]),
+            (pvcsuvr, pvcstatsrois, [('outputnode.suvr', 'inputnode.suvr')]),
+            (statsrois, datasink, [('outputnode.stats', 'PvcStatsrois.@stats')]),
+            ])
+
+
+    return wf

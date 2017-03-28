@@ -3,69 +3,50 @@
 """
 
 
-from lib.utils import WorkflowManager
+from ..lib.utils import WorkflowManager
 
 
 class Suvr(WorkflowManager):
 
     def __init__(self, config, name):
+        self.infields = [
+                "atlas",
+                "pet",
+                ]
+        self.outfields = [
+                "suvr",
+                "mask",
+                ]
         WorkflowManager.__init__(self, config, name)
 
     def generate(self):
-        if self.kind == '50to70':
-            self._wf = self._suvr50to70()
+        if self.kind == 'default':
+            self._wf = self.default()
         else:
-            self.implement_error()
+            self.error()
 
-    def connect(self, main_wf):
-        #fssource = main_wf.get_node('fssource')
-        preparation = main_wf.get_node('Preparation')
-        t1registration = main_wf.get_node('T1registration')
-        datasink = main_wf.get_node('datasink')
-
-        main_wf.connect([
-            (preparation, self._wf, [
-                ('asegconvert.out_file', 'pickatlas.atlas'),
-                ]),
-            (t1registration, self._wf,
-                [('coregister.coregistered_source', 'suvrcalc.in_file')]),
-            (self._wf, datasink, [
-                ('pickatlas.mask_file', 'SUVr.@mask'),
-                ('suvrcalc.out_file', 'SUVr.@suvr'),
-                ]),
-            ])
-
-
-    def _suvr50to70(self):
-        from interfaces.suvrcalc import SuvrCalc
+    def default(self):
+        from ..interfaces.suvrcalc import SuvrCalc
         from nipype.algorithms.misc import PickAtlas
-        from nipype.interfaces.utility import Function
-        from nipype.pipeline.engine import MapNode, Node, Workflow
+        from nipype.pipeline.engine import Node, Workflow
 
-        '''
-        pickatlas = MapNode(
-                PickAtlas(
-                    labels=tuple(self.config['labels'].values()),
-                    #output_file=list(self.config['labels'].keys()),
-                    ),
-                name='pickatlas',
-                #iterfield=['labels', 'output_file'])
-                iterfield=['labels'])
-        '''
-        pickatlas = Node(
-                PickAtlas(labels=self.config['labels']['cerebellar']),
-                name='pickatlas')
+        pickatlas = Node(PickAtlas(), name='pickatlas')
+        iterables = []
+        for key, value in self.config['pickatlas']['labels'].items():
+            iterables.append(value)
+        pickatlas.iterables = ("labels", iterables)
 
-        suvrcalc = Node(
-                SuvrCalc(),
-                name='suvrcalc',
-                )#iterfield=['refmask_file'])
+        suvrcalc = Node(SuvrCalc(), name='suvrcalc')
 
         # Workflow
         wf = Workflow(self.name)
 
         wf.connect([
+            (self.inputnode, pickatlas, [('atlas', 'atlas')]),
+            (self.inputnode, suvrcalc, [('pet', 'in_file')]),
             (pickatlas, suvrcalc, [('mask_file', 'refmask_file')]),
+            (pickatlas, self.outputnode, [('mask_file', 'mask')]),
+            (suvrcalc, self.outputnode, [('out_file', 'suvr')]),
             ])
 
         return wf
