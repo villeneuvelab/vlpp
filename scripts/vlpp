@@ -11,7 +11,7 @@ import sys
 #sys.path.append(APP_DIR)
 
 from vlpp.lib import utils, validation
-from vlpp.vlpp import vlpp_wf
+from vlpp.vlpp import main_workflow
 
 
 def get_arguments():
@@ -85,7 +85,7 @@ def main():
             )
 
     # Main workflow
-    wf = vlpp_wf(argsValidated.config_dict)
+    wf = main_workflow(argsValidated.config_dict)
 
     # Graph
     #graph2use: 'orig', 'hierarchical' (default), 'flat', 'exec', 'colored'

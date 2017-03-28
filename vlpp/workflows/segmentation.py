@@ -3,36 +3,29 @@
 """
 
 
-from lib.utils import WorkflowManager
+from ..lib.utils import WorkflowManager
 
 
 class Segmentation(WorkflowManager):
 
     def __init__(self, config, name):
+        self.infields = [
+                "anat",
+                "anatnii",
+                ]
+        self.outfields = [
+                "seg",
+                ]
         WorkflowManager.__init__(self, config, name)
 
     def generate(self):
         if self.kind == 'spm':
-            self._wf = self._spm()
-        elif self.kind == 'fsl':
-            #self._wf = self._fsl()
-            self.implement_error()
+            self._wf = self.spm()
         else:
-            self.implement_error()
-
-    def connect(self, main_wf):
-        preparation = main_wf.get_node('Preparation')
-        datasink = main_wf.get_node('datasink')
-
-        main_wf.connect([
-            (preparation, self._wf,
-                [('t1convert.out_file', 'newsegment.channel_files')]),
-            (self._wf, datasink,
-                [('merge.merged_file', 'Segmentation')]),
-            ])
+            self.error()
 
 
-    def _spm(self):
+    def spm(self):
         from nipype.interfaces.spm import NewSegment
         from nipype.interfaces.fsl import Merge
         from nipype.pipeline.engine import Node, Workflow
@@ -46,8 +39,10 @@ class Segmentation(WorkflowManager):
         wf = Workflow(self.name)
 
         wf.connect([
+            (self.inputnode, newsegment, [('anatnii', 'channel_files')]),
             (newsegment, merge,
                 [(('native_class_images', listoflist2list), 'in_files')]),
+            (merge, self.outputnode, [('merged_file', 'seg')]),
             ])
 
         return wf

@@ -14,7 +14,7 @@ import nipype.pipeline.engine as pe
 from .lib import utils
 
 
-def vlpp_wf(config_dict):
+def main_workflow(config_dict):
 
     # Usefull variables
     output_dir = config_dict['arguments']['output_dir']
@@ -92,53 +92,92 @@ def vlpp_wf(config_dict):
     from .workflows.preparation import Preparation
     _tag = 'preparation'
     preparation = Preparation(config_dict[_tag], _tag).wf
-    wf.connect([
-        #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
-        (petfiles, preparation, [('petframes', 'inputnode.pet')]),
-        (fssource, preparation, [('T1', 'inputnode.anat')]),
-        (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
-        (preparation, datasink, [
-            ('outputnode.pet', 'Preparation.@pet'),
-            ('outputnode.anat', 'Preparation.@anat'),
-            ('outputnode.atlas', 'Preparation.@atlas'),
-            ]),
-        ])
+    if preparation is not None:
+        wf.connect([
+            #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
+            (petfiles, preparation, [('petframes', 'inputnode.pet')]),
+            (fssource, preparation, [('T1', 'inputnode.anat')]),
+            (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
+            (preparation, datasink, [
+                ('outputnode.pet', 'Preparation.@pet'),
+                ('outputnode.anat', 'Preparation.@anat'),
+                ('outputnode.atlas', 'Preparation.@atlas'),
+                ]),
+            ])
 
 
     ## Smoothing
     from .workflows.smoothing import Smoothing
     _tag = 'smoothing'
     smoothing = Smoothing(config_dict[_tag], _tag).wf
-    wf.connect([
-        (preparation, smoothing, [('outputnode.pet', 'inputnode.pet')]),
-        (smoothing, datasink, [('outputnode.pet', 'Smoothing.@pet')]),
-        ])
+    if smoothing is not None:
+        wf.connect([
+            (preparation, smoothing, [('outputnode.pet', 'inputnode.pet')]),
+            (smoothing, datasink, [('outputnode.pet', 'Smoothing.@pet')]),
+            ])
+
+
+    ## Realign
+    #from .workflows.realign import Realign
+    #_tag = 'realign'
+    #realign = Realign(config_dict[_tag], _tag).wf
+    realign = None
+    if realign is not None:
+        pass
+
+
+    ## PET and Anat registration
+    from .workflows.anatreg import Anatreg
+    _tag = 'anatregistration'
+    anatreg = Anatreg(config_dict[_tag], _tag).wf
+    if anatreg is not None:
+        if realign is None:
+            wf.connect([
+                (smoothing, anatreg, [('outputnode.pet', 'inputnode.pet')]),
+                ])
+        else:
+            """
+            wf.connect([
+                (realign, anatreg, [
+                    ('calcmean50to70.out_file', 'coregister.source'),
+                    ('tile_data.realigned_files', 'coregister.apply_to_files'),
+                    ]),
+               (anareg, datasink, [('coregister.coregistered_files', 'T1registration.@files')]),
+               ])
+            """
+            pass
+
+        wf.connect([
+            (preparation, anatreg, [('outputnode.anat', 'inputnode.anat')]),
+            (anatreg, datasink, [('outputnode.pet', 'AnatRegistration.@pet')]),
+            ])
+
+
+    ## Anat and Template registration
+    #from .workflows.tplreg import Tplreg
+    #_tag = 'templateregistration'
+    #tplreg = Tplreg(config_dict[_tag], _tag).wf
+    tplreg = None
+    if tplreg is not None:
+        pass
+
+
+    ## Segmentation
+    from .workflows.segmentation import Segmentation
+    _tag = 'segmentation'
+    segmentation = Segmentation(config_dict[_tag], _tag).wf
+    if segmentation is not None:
+        wf.connect([
+            (preparation, segmentation,
+                [('outputnode.anat', 'inputnode.anat')]),
+            (anatreg, segmentation,
+                [('outputnode.anatnii', 'inputnode.anatnii')]),
+            (segmentation, datasink,
+                [('outputnode.seg', 'Segmentation')]),
+            ])
 
 
     '''
-    ## Realign
-    from workflows.realign import Realign
-    realign = Realign(config_dict['realign'], 'Realign')
-    realign.implement(wf)
-
-    ## T1 registration
-    from .workflows.t1registration import T1registration
-    t1registration = T1registration(config_dict['t1registration'],
-                                    'T1registration')
-    t1registration.implement(wf)
-
-    # Template registration
-    from workflows.registration import Registration
-    tplregistration = Registration(config_dict['tplregistration'],
-                                   'tplregistration')
-    tplregistration.implement(wf)
-
-    # Segmentation
-    from .workflows.segmentation import Segmentation
-    segmentation = Segmentation(config_dict['segmentation'],
-                                    'Segmentation')
-    segmentation.implement(wf)
-
     # SUVR
     from .workflows.suvr import Suvr
     suvr = Suvr(config_dict['suvr'], 'Suvr')

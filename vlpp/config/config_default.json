@@ -39,7 +39,7 @@
         },
         "calcmean_param": {"mean_method": "UCD_python"}
     },
-    "t1registration": {
+    "anatregistration": {
         "kind": "spm",
         "coregister_param": {
             "cost_function": "nmi",
@@ -65,7 +65,7 @@
             "write_mask": false
         }
     },
-    "tplregistration": {
+    "templateregistration": {
         "kind": "spm",
         "coregister_param": {
             "target": "",
