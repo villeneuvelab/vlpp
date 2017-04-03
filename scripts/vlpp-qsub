@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import argparse
+import sys
+
+from vlpp.lib.qsub import Qsub
+
+
+def get_arguments():
+
+    parser = argparse.ArgumentParser(
+            description="""
+            """,
+            epilog="""
+            """)
+
+    parser.add_argument(
+            '-w', '--walltime',
+            required=False, default="1:30:00",
+            help='walltime',
+            )
+
+    parser.add_argument(
+            '-r', '--rapid',
+            required=False,
+            help='RAPid on guillimin',
+            )
+
+    parser.add_argument(
+            '-d', '--dry',
+            required=False, action='store_true',
+            help='Save qsub script but do not run qsub',
+            )
+
+    return parser.parse_args()
+
+
+def main():
+    args = get_arguments()
+    app = Qsub(args)
+    app.run()
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

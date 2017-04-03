@@ -1,79 +1,84 @@
 # -*- coding: utf-8 -*-
 
 
+from jsonmerge import merge
 import os
-from . import utils
+from .utils import APP_DIR, load_json, write_json
 
 
 class Validation(object):
 
     def __init__(self, args):
-        self._args = args
-        self.userConfig = utils.load_json(args.config_file)
-        self.userArguments = self.userConfig['arguments']
+        self.config_file = os.path.abspath(args.config_file)
+        self.arguments = load_json(self.config_file)['arguments']
 
     @property
     def _pet_dir(self):
         """Return absolute path of the pet directory
         """
-        if 'pet_dir' in self.userArguments:
-            pet_dir = self.userArguments['pet_dir']
-            return os.path.abspath(pet_dir)
+        if 'pet_dir' in self.arguments:
+            return self.arguments['pet_dir']
         else:
-            #TODO
+            #TODO: print warning
             pass
 
     @property
     def _fs_dir(self):
         """Return absolute path of the freesurfer directory
         """
-        if 'fs_dir' in self.userArguments:
-            fs_dir = self.userArguments['fs_dir']
-            return os.path.abspath(fs_dir)
+        if 'fs_dir' in self.arguments:
+            return self.arguments['fs_dir']
         else:
-            #TODO
+            #TODO: print warning
             pass
 
     @property
     def _subject_id(self):
         """Return subject id
         """
-        if 'subject_id' in self.userArguments:
-            return self.userArguments['subject_id']
+        if 'subject_id' in self.arguments:
+            return self.arguments['subject_id']
         else:
-            return os.path.basename(self._pet_dir)
+            #TODO: print warning
+            pass
+
+    @property
+    def _base_dir(self):
+        return os.path.dirname(os.path.dirname(self.config_file))
 
     @property
     def _output_dir(self):
         """Return absolute path of the output
         """
-        if 'output_dir' in self.userArguments:
-            output_dir = self.userArguments['output_dir']
+        if 'output_dir' in self.arguments:
+            output_dir = self.arguments['output_dir']
             return os.path.join(
                     os.path.abspath(output_dir),
                     self._subject_id,
                     )
         else:
-            #TODO
-            pass
+            return os.path.join(
+                    self._base_dir,
+                    'output',
+                    self._subject_id,
+                    )
 
     @property
     def _working_dir(self):
         """Return absolute path of working directory
         """
-        if 'working_dir' in self.userArguments:
-            working_dir = self.userArguments['working_dir']
+        if 'working_dir' in self.arguments:
+            working_dir = self.arguments['working_dir']
+            return os.path.join(
+                    os.path.abspath(working_dir),
+                    self._subject_id,
+                    )
         else:
-            working_dir = os.path.join(os.environ['SCRATCH'])
-
-        return os.path.join(
-                os.path.abspath(working_dir),
-                self._subject_id,
-                )
-
-    @property
-    def _debug(self):
-        return self._args.debug
+            return os.path.join(
+                    self._base_dir,
+                    'working_dir',
+                    self._subject_id,
+                    )
 
     @property
     def config_dict(self):
@@ -81,19 +86,24 @@ class Validation(object):
         Load the default dictionnary from config_default.json file and update it
         """
         defaultConfigFile = os.path.join(
-                utils.PROD_DIR, 'config', 'config_default.json')
-        defaultConfig = utils.load_json(defaultConfigFile)
+                APP_DIR, 'config', 'config_default.json')
+        defaultConfig = load_json(defaultConfigFile)
 
-        arguments = {}
-        arguments["pet_dir"] = self._pet_dir
-        arguments["fs_dir"] = self._fs_dir
-        arguments["subject_id"] = self._subject_id
-        arguments["output_dir"] = self._output_dir
-        arguments["working_dir"] = self._working_dir
-        arguments["debug"] = self._debug
+        studyConfigFile = os.path.join(self._base_dir, "config.json")
+        studyConfig = load_json(studyConfigFile)
 
-        self.userConfig.update({"arguments": arguments})
-        defaultConfig.update(self.userConfig)
+        subjectConfig = {
+                "arguments": {
+                    "pet_dir": self._pet_dir,
+                    "fs_dir": self._fs_dir,
+                    "subject_id": self._subject_id,
+                    "output_dir": self._output_dir,
+                    "working_dir": self._working_dir,
+                    }
+                }
 
-        return defaultConfig
+        return merge(merge(defaultConfig, studyConfig), subjectConfig)
 
+    def save(self):
+        write_json(
+                self.config_dict, os.path.join(self._output_dir, "config.json"))

@@ -35,7 +35,7 @@ def main_workflow(config_dict):
     # Usefull variables
     output_dir = config_dict['arguments']['output_dir']
     working_dir = config_dict['arguments']['working_dir']
-    user_debug = config_dict['arguments']['debug']
+    #user_debug = config_dict['arguments']['debug']
     pet_dir = config_dict['arguments']['pet_dir']
     fs_dir = config_dict['arguments']['fs_dir']
     subject_id = config_dict['arguments']['subject_id']
@@ -50,13 +50,13 @@ def main_workflow(config_dict):
     # Nipype configuration
     config_dict['logging']['log_directory'] = output_dir
     config.update_config(config_dict)
-    if user_debug:
-        config.enable_debug_mode()
+    #if user_debug:
+    #    config.enable_debug_mode()
     logging.update_logging(config)
 
 
     # Main workflow
-    wf = pe.Workflow(name=utils.__PIPELINENAME__)
+    wf = pe.Workflow(name=utils.PIPELINENAME)
     wf.base_dir = working_dir
 
 
@@ -69,7 +69,7 @@ def main_workflow(config_dict):
     # PET Files
     templates = {
         "frametimes": "",
-        "petframes": "",
+        "pet": "",
         }
     templates.update(config_dict['selectfiles'])
     petfiles = pe.Node(nio.SelectFiles(templates), 'petfiles')
@@ -108,7 +108,7 @@ def main_workflow(config_dict):
     if preparation is not None:
         wf.connect([
             #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
-            (petfiles, preparation, [('petframes', 'inputnode.pet')]),
+            (petfiles, preparation, [('pet', 'inputnode.pet')]),
             (fssource, preparation, [('T1', 'inputnode.anat')]),
             (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
             (preparation, datasink, [
@@ -231,7 +231,6 @@ def main_workflow(config_dict):
     from .workflows.pvc import Pvc
     _tag = 'pvc'
     pvc = Pvc(config_dict[_tag], _tag).wf
-    pvc = None
     if pvc is not None:
         wf.connect([
             (anatreg, pvc, [('outputnode.pet', 'inputnode.pet')]),
@@ -247,19 +246,19 @@ def main_workflow(config_dict):
             (preparation, pvcsuvr, [('outputnode.atlas', 'inputnode.atlas')]),
             (pvc, pvcsuvr, [('outputnode.petpvc', 'inputnode.pet')]),
             (pvcsuvr, datasink, [
-                ('outputnode.mask', 'PvcPetsuvr.@mask'),
-                ('outputnode.suvr', 'PvcPetsuvr.@suvr'),
+                ('outputnode.mask', 'Pvcsuvr.@mask'),
+                ('outputnode.suvr', 'Pvcsuvr.@suvr'),
                 ]),
             ])
 
 
     # PVC SUVr Statsrois
-    pvcstatsroi = statsrois.clone(name='PvcsuvrStatsrois')
+    pvcstatsrois = statsrois.clone(name='PvcsuvrStatsrois')
     if pvc is not None:
         wf.connect([
             (preparation, pvcstatsrois, [('outputnode.atlas', 'inputnode.atlas')]),
             (pvcsuvr, pvcstatsrois, [('outputnode.suvr', 'inputnode.suvr')]),
-            (statsrois, datasink, [('outputnode.stats', 'PvcStatsrois.@stats')]),
+            (statsrois, datasink, [('outputnode.stats', 'Pvcstatsrois.@stats')]),
             ])
 
 

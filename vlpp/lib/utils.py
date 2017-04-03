@@ -3,31 +3,28 @@
 
 import json
 import os
-from nipype.interfaces.utility import IdentityInterface
-from nipype.pipeline.engine import Node
 
 
-__PIPELINENAME__ = 'VLPP'
-PROD_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+PIPELINENAME = 'VLPP'
+APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
+
+# Helper
 
 def load_json(filename):
     with open(filename, 'r') as f:
         data = json.load(f)
     return data
 
-
 def write_json(data, filename):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4, sort_keys=True)
-
 
 def print_json(data, msg=None):
     print
     if msg != None: print(msg)
     print(json.dumps(data, indent=4))
     print
-
 
 def get_subjects(input_dir):
     """
@@ -42,6 +39,10 @@ def get_subjects(input_dir):
             continue
     return subject_list
 
+
+# Class
+from nipype.interfaces.utility import IdentityInterface
+from nipype.pipeline.engine import Node
 
 class WorkflowManager(object):
 
