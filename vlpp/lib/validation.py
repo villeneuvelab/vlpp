@@ -3,7 +3,7 @@
 
 from jsonmerge import merge
 import os
-from .utils import APP_DIR, load_json, write_json
+from .utils import APP_DIR, load_json, pet_type, write_json
 
 
 class Validation(object):
@@ -11,6 +11,7 @@ class Validation(object):
     def __init__(self, args):
         self.config_file = os.path.abspath(args.config_file)
         self.arguments = load_json(self.config_file)['arguments']
+        self.config_dict = self.set_config_dict()
 
     @property
     def _pet_dir(self):
@@ -80,8 +81,7 @@ class Validation(object):
                     self._subject_id,
                     )
 
-    @property
-    def config_dict(self):
+    def set_config_dict(self):
         """Return a configuration dictionnary
         Load the default dictionnary from config_default.json file and update it
         """
@@ -90,7 +90,10 @@ class Validation(object):
         defaultConfig = load_json(defaultConfigFile)
 
         studyConfigFile = os.path.join(self._base_dir, "config.json")
-        studyConfig = load_json(studyConfigFile)
+        if os.path.exists(studyConfigFile):
+            studyConfig = merge(defaultConfig, load_json(studyConfigFile))
+        else:
+            studyConfig = defaultConfig
 
         subjectConfig = {
                 "arguments": {
@@ -99,11 +102,10 @@ class Validation(object):
                     "subject_id": self._subject_id,
                     "output_dir": self._output_dir,
                     "working_dir": self._working_dir,
-                    }
+                    },
+                "preparation": pet_type(os.path.join(
+                        self._pet_dir, studyConfig["selectfiles"]["pet"]))
                 }
 
-        return merge(merge(defaultConfig, studyConfig), subjectConfig)
+        return merge(studyConfig, subjectConfig)
 
-    def save(self):
-        write_json(
-                self.config_dict, os.path.join(self._output_dir, "config.json"))

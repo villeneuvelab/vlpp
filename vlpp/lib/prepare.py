@@ -22,7 +22,7 @@ class Prepare(object):
         if not os.path.exists(codeDir):
             os.makedirs(codeDir)
 
-        base = pd.read_csv(self.csv)
+        base = pd.read_csv(self.csv, dtype=object)
 
         for sub in base["subject_id"]:
             sub_pet = base.loc[base['subject_id'] == sub, 'pet_dir'].iloc[0]

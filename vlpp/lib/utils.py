@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import glob
 import json
 import os
 
@@ -26,18 +27,19 @@ def print_json(data, msg=None):
     print(json.dumps(data, indent=4))
     print
 
-def get_subjects(input_dir):
-    """
-    Not used right now
-    """
-    subject_list = []
-    for fname in os.listdir(input_dir):
-        path = os.path.join(input_dir, fname)
-        if os.path.isdir(path):
-            subject_list.append(fname)
-        else:
-            continue
-    return subject_list
+def pet_type(globInput):
+    pet = glob.glob(globInput)
+
+    #extension
+    base, ext = os.path.splitext(pet[0])
+    if ext == '.gz':
+        ext = '{}{}'.format(os.path.splitext(base)[1], ext)
+    ext = ext[1:]
+
+    if len(pet) == 1:
+        pass
+
+    return {"ext": ext}
 
 
 # Class
@@ -72,8 +74,11 @@ class WorkflowManager(object):
 
     @property
     def wf(self):
-        self.generate()
-        return self._wf
+        if self.ignore:
+            return None
+        else:
+            self.generate()
+            return self._wf
 
     @property
     def kind(self):

@@ -67,12 +67,7 @@ def main_workflow(config_dict):
 
 
     # PET Files
-    templates = {
-        "frametimes": "",
-        "pet": "",
-        }
-    templates.update(config_dict['selectfiles'])
-    petfiles = pe.Node(nio.SelectFiles(templates), 'petfiles')
+    petfiles = pe.Node(nio.SelectFiles(config_dict['selectfiles']), 'petfiles')
     petfiles.inputs.base_directory = pet_dir
     petfiles.inputs.sort_filelist = True
     #petfiles.inputs.raise_on_empty = False
@@ -112,9 +107,9 @@ def main_workflow(config_dict):
             (fssource, preparation, [('T1', 'inputnode.anat')]),
             (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
             (preparation, datasink, [
-                ('outputnode.pet', 'Preparation.@pet'),
-                ('outputnode.anat', 'Preparation.@anat'),
-                ('outputnode.atlas', 'Preparation.@atlas'),
+                ('outputnode.pet', 'pet.@pet-preparation'),
+                ('outputnode.anat', 'mri.@anat-preparation'),
+                ('outputnode.atlas', 'mri.@atlas-preparation'),
                 ]),
             ])
 
@@ -126,7 +121,7 @@ def main_workflow(config_dict):
     if smoothing is not None:
         wf.connect([
             (preparation, smoothing, [('outputnode.pet', 'inputnode.pet')]),
-            (smoothing, datasink, [('outputnode.pet', 'Smoothing.@pet')]),
+            (smoothing, datasink, [('outputnode.pet', 'pet.@pet-smoothing')]),
             ])
 
 
@@ -147,9 +142,14 @@ def main_workflow(config_dict):
     anatreg = Anatreg(config_dict[_tag], _tag).wf
     if anatreg is not None:
         if realign is None:
-            wf.connect([
-                (smoothing, anatreg, [('outputnode.pet', 'inputnode.pet')]),
-                ])
+            if smoothing is None:
+                wf.connect([
+                    (preparation, anatreg, [('outputnode.pet', 'inputnode.pet')]),
+                    ])
+            else:
+                wf.connect([
+                    (smoothing, anatreg, [('outputnode.pet', 'inputnode.pet')]),
+                    ])
         else:
             """
             wf.connect([
@@ -164,7 +164,7 @@ def main_workflow(config_dict):
 
         wf.connect([
             (preparation, anatreg, [('outputnode.anat', 'inputnode.anat')]),
-            (anatreg, datasink, [('outputnode.pet', 'Anatregistration.@pet')]),
+            (anatreg, datasink, [('outputnode.pet', 'pet.@pet-anatreg')]),
             ])
 
 
@@ -189,7 +189,7 @@ def main_workflow(config_dict):
             (anatreg, segmentation,
                 [('outputnode.anatnii', 'inputnode.anatnii')]),
             (segmentation, datasink,
-                [('outputnode.seg', 'Segmentation')]),
+                [('outputnode.seg', 'mri.@segmentation')]),
             ])
 
 
@@ -202,8 +202,8 @@ def main_workflow(config_dict):
             (preparation, suvr, [('outputnode.atlas', 'inputnode.atlas')]),
             (anatreg, suvr, [('outputnode.pet', 'inputnode.pet')]),
             (suvr, datasink, [
-                ('outputnode.mask', 'Suvr.@mask'),
-                ('outputnode.suvr', 'Suvr.@suvr'),
+                ('outputnode.mask', 'mask.@mask-suvr'),
+                ('outputnode.suvr', 'suvr.@pet-suvr'),
                 ]),
             ])
 
@@ -216,16 +216,14 @@ def main_workflow(config_dict):
         wf.connect([
             (preparation, statsrois, [('outputnode.atlas', 'inputnode.atlas')]),
             (suvr, statsrois, [('outputnode.suvr', 'inputnode.suvr')]),
-            (statsrois, datasink, [('outputnode.stats', 'Statsrois.@stats')]),
+            (statsrois, datasink, [('outputnode.stats', 'stats.@statsrois')]),
             ])
 
 
-    '''
     # QA
-    from .workflows.qa import Qa
-    qa = Qa(config_dict['qa'], 'Qa')
-    qa.implement(wf)
-    '''
+    #from .workflows.qa import Qa
+    #qa = Qa(config_dict['qa'], 'Qa')
+    #qa.implement(wf)
 
     # Partial Volume Correction
     from .workflows.pvc import Pvc
@@ -235,7 +233,7 @@ def main_workflow(config_dict):
         wf.connect([
             (anatreg, pvc, [('outputnode.pet', 'inputnode.pet')]),
             (segmentation, pvc, [('outputnode.seg', 'inputnode.seg')]),
-            (pvc, datasink, [('outputnode.petpvc', 'Petpvc.@petpvc')]),
+            (pvc, datasink, [('outputnode.petpvc', 'pet.@pet-pvc')]),
             ])
 
 
@@ -246,8 +244,8 @@ def main_workflow(config_dict):
             (preparation, pvcsuvr, [('outputnode.atlas', 'inputnode.atlas')]),
             (pvc, pvcsuvr, [('outputnode.petpvc', 'inputnode.pet')]),
             (pvcsuvr, datasink, [
-                ('outputnode.mask', 'Pvcsuvr.@mask'),
-                ('outputnode.suvr', 'Pvcsuvr.@suvr'),
+                ('outputnode.mask', 'mask.@mask-pvcsuvr'),
+                ('outputnode.suvr', 'suvr.@pet-pvcsuvr'),
                 ]),
             ])
 
@@ -258,7 +256,7 @@ def main_workflow(config_dict):
         wf.connect([
             (preparation, pvcstatsrois, [('outputnode.atlas', 'inputnode.atlas')]),
             (pvcsuvr, pvcstatsrois, [('outputnode.suvr', 'inputnode.suvr')]),
-            (statsrois, datasink, [('outputnode.stats', 'Pvcstatsrois.@stats')]),
+            (pvcstatsrois, datasink, [('outputnode.stats', 'stats.@pvcstatsrois')]),
             ])
 
 

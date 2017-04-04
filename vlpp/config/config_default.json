@@ -7,8 +7,6 @@
         "working_dir": ""
     },
     "selectfiles": {
-        "frametimes": "frametimes*.csv",
-        "pet": "{subject_id}_PIB_frame*.nii.gz"
     },
     "preparation": {
         "kind": "default",

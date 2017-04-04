@@ -65,10 +65,18 @@ class Preparation(WorkflowManager):
         # Workflow
         wf = Workflow(self.name)
 
+        if self.config["ext"] == "mnc":
+            wf.connect([
+                (self.inputnode, petconvert, [('pet', 'in_file')]),
+                (petconvert, petgz, [('out_file', 'in_file')]),
+                (petgz, self.outputnode, [('out_file', 'pet')]),
+                ])
+        elif self.config["ext"] == "nii.gz":
+            wf.connect([
+                (self.inputnode, self.outputnode, [('pet', 'pet')]),
+                ])
+
         wf.connect([
-            (self.inputnode, petconvert, [('pet', 'in_file')]),
-            (petconvert, petgz, [('out_file', 'in_file')]),
-            (petgz, self.outputnode, [('out_file', 'pet')]),
             #(self.inputnode, sortframes, [('frametimes', 'in_file')]),
             (self.inputnode, anatconvert, [('anat', 'in_file')]),
             (anatconvert, self.outputnode, [('out_file', 'anat')]),

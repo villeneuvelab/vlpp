@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+import argparse
+import sys
+
+from vlpp.qa import Qa
+
+
+def get_arguments():
+
+    parser = argparse.ArgumentParser(
+            description="""
+            """,
+            epilog="""
+            """)
+
+    parser.add_argument(
+            '-v', '--vlpp_dir',
+            required=True,
+            help='vlpp directory output',
+            )
+
+    return parser.parse_args()
+
+
+def main():
+    args = get_arguments()
+    app = Qa(args.vlpp_dir)
+    app.run()
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

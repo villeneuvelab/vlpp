@@ -8,8 +8,8 @@ The pipeline is available on guillimin cluster.
 You have to setup your environment correctly: 
 
 ```
-export SOFT_DIR=/sf1/project/yai-974-aa/local
-module use ${SOFT_DIR}/modulefiles
+export SOFTWAREVL_DIR=/sf1/project/yai-974-aa/local
+module use ${SOFTWAREVL_DIR}/modulefiles
 module load VilleneuveLab
 source activate vlpp
 ```
