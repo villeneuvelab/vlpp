@@ -1,29 +1,74 @@
 # VLPP: Villeneuve Laboratory PET Pipeline
 
-## Launch
+## Using it at the lab
 
 ### Setting up you environment
 
-The pipeline is available on guillimin cluster.
-You have to setup your environment correctly: 
+If you have access to guillimin cluster, the pipeline is already installed.
+You have to setup your environment correctly:
 
 ```
-export SOFTWAREVL_DIR=/sf1/project/yai-974-aa/local
-module use ${SOFTWAREVL_DIR}/modulefiles
+ssh -Y <username>@guillimin.hpc.mcgill.ca
+module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
 source activate vlpp
 ```
 
-###
+## Using the pipeline
+
+### Prepare your data
+
+Create a directory to launch all the commands
 
 ```
 mkdir vlpp_processing
-cd vlpp_processing/
-vlpp-prepare -p <PET_DIR> -f <SUBJECTS_DIR> -c <CSV_FILE>
+cd vlpp_processing
 ```
+
+#### `vlpp-prepare`
+
+The tool `vlpp-prepare` is here to help setting things up for several subjects.
+
+Here is how to use it: `vlpp-prepare -f <SUBJECTS_DIR> -p <PET_DIR> -c <CSV_FILE>`
+
+- `SUBJECTS_DIR`: this is your freesurfer SUBJECTS_DIR
+- `PET_DIR`: same concept 
+- `CSV_FILE`: with tree columns: `subject_id`, `fs_dir`, `pet_dir`
+
+Example with data structures like this:
+
+```
+/path
+  |--freesurfer
+    |--subjects
+      |--subject_00_type1
+      |--subject_01_type1
+/other_path
+  |--data
+    |--pet
+      |--subject_00_20170308
+      |--subject_01_20170315
+```
+
+You could launch vlpp-prepare like this:
+
+`vlpp-prepare -f /path/freesurfer/subjects -p /other_path/data/pet -c <CSV_FILE>`
+
+with a csv file like this:
+
+| subject_id | fs_dir | pet_dir |
+| --- | --- | --- |
+| subject_00 | subject_00_type1 | subject_00_20170308 |
+| subject_01 | subject_01_type1 | subject_01_20170315 |
+
+
 
 
 ## Install
+
+```
+git clone --recursive https://github.com/villeneuvelab/vlpp.git
+```
 
 ### Software dependencies
 
