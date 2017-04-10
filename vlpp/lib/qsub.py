@@ -4,6 +4,8 @@
 import glob
 from jinja2 import Environment, FileSystemLoader
 import os
+from subprocess import call
+import time
 
 from .utils import APP_DIR
 
@@ -12,12 +14,8 @@ class Qsub(object):
 
     def __init__(self, args):
         self.walltime = args.walltime
-        self._rapid = args.rapid
+        self.rapid = args.rapid
         self.dry = args.dry
-
-    @property
-    def rapid(self):
-        return "yai-974-aa" #Sylvia
 
     def run(self):
 

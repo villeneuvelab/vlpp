@@ -24,7 +24,7 @@ def get_arguments():
 
     parser.add_argument(
             '-r', '--rapid',
-            required=False,
+            required=True,
             help='RAPid on guillimin',
             )
 
