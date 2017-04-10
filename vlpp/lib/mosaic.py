@@ -144,7 +144,6 @@ class Mosaic(object):
         plt.close()
 
         tags = {
-                'mosaic_file': os.path.basename(target),
                 'Y': self.volWidth,
                 'Z': self.volHeight,
                 }

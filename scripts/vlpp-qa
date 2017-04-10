@@ -3,9 +3,11 @@
 
 
 import argparse
+import os
 import sys
 
 from vlpp.qa import Qa
+from vlpp.lib.utils import APP_DIR, load_json
 
 
 def get_arguments():
@@ -17,7 +19,7 @@ def get_arguments():
             """)
 
     parser.add_argument(
-            '-v', '--vlpp_dir',
+            '-i', '--in_dir',
             required=True,
             help='vlpp directory output',
             )
@@ -27,7 +29,16 @@ def get_arguments():
 
 def main():
     args = get_arguments()
-    app = Qa(args.vlpp_dir)
+
+    # Directory
+    in_dir = os.path.abspath(args.in_dir)
+
+    # Config
+    configFile = os.path.join(APP_DIR, 'config', 'config_qa.json')
+    config = load_json(configFile)
+
+    # App
+    app = Qa(in_dir, config)
     app.run()
     return 0
 

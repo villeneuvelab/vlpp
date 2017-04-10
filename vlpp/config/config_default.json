@@ -125,22 +125,6 @@
             "MediaPFC": [1014,2014,1028,2028,1026,2026,1002,2002]
         }
     },
-    "qa": {
-        "kind": "classic",
-        "ignore": false,
-        "rgb": {
-            "colormap": "jet",
-            "dimension": 3,
-            "minimum_input": 0,
-            "maximum_input": 2
-        },
-        "mosaic": {
-            "alpha_value": 0.5,
-            "flip_slice": "1x1",
-            "pad_or_crop": "mask",
-            "output_image": "output.jpg"
-        }
-    },
     "pvc": {
         "kind": "default",
         "ignore": false,

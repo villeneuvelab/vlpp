@@ -1,0 +1,6 @@
+[submodule "dashboards"]
+	path = dashboards
+	url = https://github.com/keen/dashboards
+[submodule "brainsprite.js"]
+	path = brainsprite.js
+	url = https://github.com/SIMEXP/brainsprite.js

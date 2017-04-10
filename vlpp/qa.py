@@ -14,30 +14,16 @@ import nipype.pipeline.engine as pe
 from .lib import utils
 
 
-def compute_substitution(config):
-    rsl = []
-
-    rsl.append(('_subject_id_', ''))
-
-    for s in config["smoothing"]["fwhm"]:
-        val = "fwhm_{}".format(s)
-        rsl.append(("_{}".format(val), val))
-
-    for name, l in config["suvr"]["pickatlas"]["labels"].items():
-        in_str = "_labels_{}".format(".".join(map(str, l)))
-        rsl.append((in_str, name))
-
-    return rsl
-
-
 class Qa(object):
 
-    def __init__(self, vlpp_dir):
-        self.vlpp_dir = vlpp_dir
-        self.wf = set_wf()
+    def __init__(self, in_dir, config):
+        self.in_dir = in_dir
+        self.config = config
+        self.wf = self.set_wf()
 
 
     def run(self):
+        self.wf.write_graph(graph2use='colored')
         self.wf.run()
 
 
@@ -46,8 +32,8 @@ class Qa(object):
         """
         """
         subjects = []
-        for fname in os.listdir(self.vlpp_dir):
-            path = os.path.join(self.vlpp_dir, fname)
+        for fname in os.listdir(self.in_dir):
+            path = os.path.join(self.in_dir, fname)
             if (fname != 'QA') and (os.path.isdir(path)):
                 subjects.append(fname)
             else:
@@ -58,25 +44,17 @@ class Qa(object):
     def set_wf(self):
 
         # Usefull variables
-        output_dir = os.path.join(self.vlpp_dir, "QA")
-        """
-        output_dir = config_dict['arguments']['output_dir']
-        working_dir = config_dict['arguments']['working_dir']
-        #user_debug = config_dict['arguments']['debug']
-        pet_dir = config_dict['arguments']['pet_dir']
-        fs_dir = config_dict['arguments']['fs_dir']
-        subject_id = config_dict['arguments']['subject_id']
-        """
+        qa_dir = os.path.join(self.in_dir, "QA")
 
 
         # Directories
-        for directory in [output_dir]:
+        for directory in [qa_dir]:
             if not os.path.exists(directory):
                 os.makedirs(directory)
 
 
         # Nipype configuration
-        config.update_config({'logging': {'log_directory': output_dir}})
+        config.update_config({'logging': {'log_directory': qa_dir}})
         #config.logging.log_directory = output_dir
         #if user_debug:
         #    config.enable_debug_mode()
@@ -84,7 +62,7 @@ class Qa(object):
 
 
         # Main workflow
-        wf = pe.Workflow(name="{}-QA".format(utils.PIPELINENAME))
+        wf = pe.Workflow(name="{}_QA".format(utils.PIPELINENAME))
         wf.base_dir = qa_dir
 
 
@@ -92,55 +70,78 @@ class Qa(object):
         infields = ['subject_id']
         infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
         #infosource.inputs.subject_id = subject_id
-        print(self.subjects)
+        #print(self.subjects)
         infosource.iterables = [('subject_id', self.subjects)]
+        #infosource.iterables = [('subject_id', ['PAD115095_NAV'])]
 
 
         # SelectFiles
         templates = {
-                "anat": "mri/T1_out.nii.gz",
-                "atlas": "mri/aparc+aseg_out.nii.gz",
+                "anat": "{subject_id}/mri/T1_out.nii.gz",
+                "atlas": "{subject_id}/mri/aparc+aseg_out.nii.gz",
+                "petreg": "{subject_id}/pet/*/r*mean_maths.nii.gz",
+                "mask": "{subject_id}/mask/cerebellum*/*nii.gz",
+                "suvr": "{subject_id}/suvr/*/cerebellum*/*maths_suvr.nii.gz",
                 }
-        petfiles = pe.Node(nio.SelectFiles(templates), 'selectfiles')
-        petfiles.inputs.base_directory = self.vlpp_dir
-        petfiles.inputs.sort_filelist = True
-        #petfiles.inputs.raise_on_empty = False
+        selectfiles = pe.Node(nio.SelectFiles(templates), 'selectfiles')
+        selectfiles.inputs.base_directory = self.in_dir
+        selectfiles.inputs.sort_filelist = True
+        #selectfiles.inputs.raise_on_empty = False
+
+
+        # Dashboards Files
+        assets_templates = {
+            'bcss': 'dashboards/assets/lib/bootstrap/dist/css/bootstrap.min.css',
+            'keencss': 'dashboards/assets/css/keen-dashboards.css',
+            'jquery': 'dashboards/assets/lib/jquery/dist/jquery.min.js',
+            'bjs': 'dashboards/assets/lib/bootstrap/dist/js/bootstrap.min.js',
+            'holder': 'dashboards/assets/lib/holderjs/holder.js',
+            'keen': 'dashboards/assets/lib/keen-js/dist/keen.min.js',
+            'meta': 'dashboards/assets/js/meta.js',
+            'bs': 'brainsprite.js/assets/brainsprite.min.js',
+            }
+        assetsfiles = pe.Node(nio.SelectFiles(assets_templates), 'assetsfiles')
+        assetsfiles.inputs.base_directory = os.path.dirname(utils.APP_DIR)
 
 
         # Datasink
         datasink = pe.Node(nio.DataSink(), 'datasink')
-        datasink.inputs.base_directory = output_dir
+        datasink.inputs.base_directory = qa_dir
         #substitutions = compute_substitution(config_dict)
         #datasink.inputs.substitutions = substitutions
+        datasink.inputs.substitutions = (('_subject_id_', ''))
 
 
         # General connections
+        assets_connexions = [
+            (k, 'assets.@{}'.format(k)) for k in assets_templates.keys()
+            ]
         wf.connect([
             (infosource, selectfiles, [[_] *2 for _ in infields]),
+            (assetsfiles, datasink, assets_connexions),
             #(infosource, datasink, [('subject_id', 'container')]),
             ])
-        wf.add_nodes([datasink])
 
 
         # Worflows
 
-        # QA
-        from .workflows.qa import Qa
-        qa = Qa(config_dict['qa'], 'Qa')
-        qa.implement(wf)
+        # Images
+        from .workflows.mosaics import Mosaics
+        mosaics = Mosaics(self.config['mosaics'], 'Mosaics').wf
+        connexions = [(k, 'inputnode.{}'.format(k)) for k in templates.keys()]
+        wf.connect([(selectfiles, mosaics, connexions)])
 
+
+        from .interfaces.dashboard import Dashboard
+        dashboard = pe.Node(Dashboard(base_dir=qa_dir), 'dashboard')
+        wf.connect([
+            (infosource, dashboard, [('subject_id', 'subject_id')]),
+            (mosaics, dashboard, [
+                ('outputnode.files', 'in_files'),
+                ('outputnode.tags', 'tags'),
+                ]),
+            (dashboard, datasink, [('html_file', '@dashboard')]),
+            ])
 
         return wf
 
-"""
-        # Statsrois
-        from .workflows.statsrois import Statsrois
-        _tag = 'statsrois'
-        statsrois = Statsrois(config_dict[_tag], _tag).wf
-        if statsrois is not None:
-            wf.connect([
-                (preparation, statsrois, [('outputnode.atlas', 'inputnode.atlas')]),
-                (suvr, statsrois, [('outputnode.suvr', 'inputnode.suvr')]),
-                (statsrois, datasink, [('outputnode.stats', 'Statsrois.@stats')]),
-                ])
-"""

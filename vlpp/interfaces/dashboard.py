@@ -2,7 +2,7 @@
 
 
 from jinja2 import Environment, FileSystemLoader
-from lib.utils import PROD_DIR
+from ..lib.utils import APP_DIR
 import os
 from os.path import abspath as opa
 
@@ -12,8 +12,10 @@ from nipype.utils.filemanip import split_filename
 
 
 class DashboardInputSpec(BaseInterfaceInputSpec):
-    tags = traits.Dict(desc='brainsprite tags')
+    in_files = traits.List(File(exists=True))
+    tags = traits.List()
     subject_id = traits.Str(desc='Subject ID')
+    base_dir = File()
 
 class DashboardOutputSpec(TraitedSpec):
     html_file = File(exists=True, desc='Dashboard HTML file')
@@ -23,15 +25,26 @@ class Dashboard(BaseInterface):
     output_spec = DashboardOutputSpec
 
     def _run_interface(self, runtime):
-        tags = self.inputs.tags
         subject_id = self.inputs.subject_id
 
-        templateDir = os.path.join(PROD_DIR, 'templates')
+        templateDir = os.path.join(APP_DIR, 'templates')
         jinja2Env = Environment(
                 loader=FileSystemLoader(templateDir),
                 trim_blocks=True,
                 )
-        tpl = jinja2Env.get_template('index.tpl')
+        tpl = jinja2Env.get_template('index.html')
+
+        # Set mosaic path
+        mosaics_info = []
+        for f, tag in zip(self.inputs.in_files, self.inputs.tags):
+            tag["mosaic_file"] = '../{}'.format(
+                    os.path.relpath(f, self.inputs.base_dir))
+            mosaics_info.append(tag)
+
+        tags = {
+                "mosaics": mosaics_info,
+                "subject_id": subject_id,
+                }
         htmlCode = tpl.render(**tags)
 
         self._html_file = opa('dashboard_{}.html'.format(subject_id))
