@@ -4,14 +4,19 @@
 #PBS -l pmem=2700mb
 #PBS -j oe
 #PBS -A {{RAPid}}
-#PBS -N {{subject}}_vlpp
+#PBS -N {{jobname}}
 #PBS -o {{logDir}}
 #PBS -e {{logDir}}
 
 module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
-module load vlpp
 source activate vlpp
 
+cd ${PBS_O_WORKDIR}
+
+{% if qa %}
+vlpp-qa
+{% else %}
 vlpp -c {{json}}
+{% endif %}
 

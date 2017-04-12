@@ -25,7 +25,7 @@
         },
         "suvr": {
             "title": "SUVr",
-            "notes": "SUVr image in freesurfer native space with brainstem contour"
+            "notes": "SUVr image in freesurfer native space with cerebellum contour"
         }
     }
 }

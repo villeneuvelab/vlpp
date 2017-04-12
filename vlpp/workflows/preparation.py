@@ -8,7 +8,8 @@ from ..lib.utils import WorkflowManager
 
 class Preparation(WorkflowManager):
 
-    def __init__(self, config, name):
+    def __init__(self, config, name, participant_id):
+        self.participant_id = participant_id
         self.infields = [
                 "frametimes",
                 "pet",
@@ -34,18 +35,26 @@ class Preparation(WorkflowManager):
         from nipype.interfaces.fsl.maths import MathsCommand
         from nipype.interfaces.freesurfer.preprocess import MRIConvert
         from nipype.pipeline.engine import Node, Workflow
-        from nipype.interfaces.utility import Function
+        from nipype.interfaces.utility import Function, Rename
 
 
         # PET conversion
         petconvert = Node(Mnc2Nii(), 'petconvert')
+
         petgz = Node(MathsCommand(output_type='NIFTI_GZ'), 'petgz')
+        petgz.inputs.out_file = "sub-{}_pet.nii.gz".format(self.participant_id)
+
+        petrename = Node(Rename(
+            format_string="sub-{}_pet".format(self.participant_id),
+            keep_ext=True),
+            'petrename')
 
         # Frames
         #sortframes = Node(SortFrames(origin='UCD'), 'sortframes')
 
         # Anat
         anatconvert = Node(MRIConvert(out_type='niigz'), 'anatconvert')
+        anatconvert.inputs.out_file = "sub-{}_T1w.nii.gz".format(self.participant_id)
 
         # Atlas
         def _selectatlas(in_files):
@@ -61,6 +70,7 @@ class Preparation(WorkflowManager):
                         function=_selectatlas), name='selectatlas')
 
         atlasconvert = Node(MRIConvert(out_type='niigz'), 'atlasconvert')
+        atlasconvert.inputs.out_file = "sub-{}_atlas.nii.gz".format(self.participant_id)
 
         # Workflow
         wf = Workflow(self.name)
@@ -73,7 +83,8 @@ class Preparation(WorkflowManager):
                 ])
         elif self.config["ext"] == "nii.gz":
             wf.connect([
-                (self.inputnode, self.outputnode, [('pet', 'pet')]),
+                (self.inputnode, rename, [('pet', 'in_file')]),
+                (rename, self.outputnode, [('out_file', 'pet')]),
                 ])
 
         wf.connect([
@@ -84,12 +95,5 @@ class Preparation(WorkflowManager):
             (selectatlas, atlasconvert, [('out_file', 'in_file')]),
             (atlasconvert, self.outputnode, [('out_file', 'atlas')]),
             ])
-
-        """
-        def ext(in_file):
-            from nipype.utils.filemanip import split_filename
-            _, base, ext = split_filename(in_file)
-            return ext
-        """
 
         return wf

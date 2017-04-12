@@ -18,27 +18,18 @@ def get_arguments():
             epilog="""
             """)
 
-    parser.add_argument(
-            '-i', '--in_dir',
-            required=True,
-            help='vlpp directory output',
-            )
-
     return parser.parse_args()
 
 
 def main():
     args = get_arguments()
 
-    # Directory
-    in_dir = os.path.abspath(args.in_dir)
-
     # Config
     configFile = os.path.join(APP_DIR, 'config', 'config_qa.json')
     config = load_json(configFile)
 
     # App
-    app = Qa(in_dir, config)
+    app = Qa(config)
     app.run()
     return 0
 

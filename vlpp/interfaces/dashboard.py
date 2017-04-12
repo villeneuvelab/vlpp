@@ -14,7 +14,7 @@ from nipype.utils.filemanip import split_filename
 class DashboardInputSpec(BaseInterfaceInputSpec):
     in_files = traits.List(File(exists=True))
     tags = traits.List()
-    subject_id = traits.Str(desc='Subject ID')
+    participant_id = traits.Str(desc='Participant ID')
     base_dir = File()
 
 class DashboardOutputSpec(TraitedSpec):
@@ -25,7 +25,7 @@ class Dashboard(BaseInterface):
     output_spec = DashboardOutputSpec
 
     def _run_interface(self, runtime):
-        subject_id = self.inputs.subject_id
+        participant_id = self.inputs.participant_id
 
         templateDir = os.path.join(APP_DIR, 'templates')
         jinja2Env = Environment(
@@ -43,11 +43,11 @@ class Dashboard(BaseInterface):
 
         tags = {
                 "mosaics": mosaics_info,
-                "subject_id": subject_id,
+                "participant_id": participant_id,
                 }
         htmlCode = tpl.render(**tags)
 
-        self._html_file = opa('dashboard_{}.html'.format(subject_id))
+        self._html_file = opa('dashboard_{}.html'.format(participant_id))
         with open(self._html_file, 'w') as f:
             f.write(htmlCode)
 

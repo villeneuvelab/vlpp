@@ -12,7 +12,7 @@ class Prepare(object):
     def __init__(self, args):
         self.pet_dir = os.path.abspath(args.pet_dir)
         self.fs_dir = os.path.abspath(args.fs_dir)
-        self.csv = args.csv
+        self.tsv = args.tsv
 
     def run(self):
 
@@ -22,14 +22,14 @@ class Prepare(object):
         if not os.path.exists(codeDir):
             os.makedirs(codeDir)
 
-        base = pd.read_csv(self.csv, dtype=object)
+        base = pd.read_csv(self.tsv, delimiter='\t', dtype=object)
 
-        for sub in base["subject_id"]:
-            sub_pet = base.loc[base['subject_id'] == sub, 'pet_dir'].iloc[0]
-            sub_fs = base.loc[base['subject_id'] == sub, 'fs_dir'].iloc[0]
+        for sub in base["participant_id"]:
+            sub_pet = base.loc[base['participant_id'] == sub, 'pet_dir'].iloc[0]
+            sub_fs = base.loc[base['participant_id'] == sub, 'fs_dir'].iloc[0]
             jsonCode = {
                     "arguments": {
-                        "subject_id": sub,
+                        "participant_id": sub,
                         "pet_dir": os.path.join(self.pet_dir, sub_pet),
                         "fs_dir": os.path.join(self.fs_dir, sub_fs),
                         }

@@ -16,8 +16,9 @@ from .lib import utils
 
 class Qa(object):
 
-    def __init__(self, in_dir, config):
-        self.in_dir = in_dir
+    def __init__(self, config):
+        self.wd = os.getcwd()
+        self.in_dir = os.path.join(self.wd, 'output')
         self.config = config
         self.wf = self.set_wf()
 
@@ -28,23 +29,23 @@ class Qa(object):
 
 
     @property
-    def subjects(self):
+    def participants(self):
         """
         """
-        subjects = []
+        participants = []
         for fname in os.listdir(self.in_dir):
             path = os.path.join(self.in_dir, fname)
             if (fname != 'QA') and (os.path.isdir(path)):
-                subjects.append(fname)
+                participants.append(fname)
             else:
                 pass
-        return subjects
+        return participants
 
 
     def set_wf(self):
 
         # Usefull variables
-        qa_dir = os.path.join(self.in_dir, "QA")
+        qa_dir = os.path.join(self.wd, "QA")
 
 
         # Directories
@@ -54,7 +55,10 @@ class Qa(object):
 
 
         # Nipype configuration
-        config.update_config({'logging': {'log_directory': qa_dir}})
+        config.update_config({
+            'logging': {'log_directory': qa_dir},
+            'execution': {'stop_on_first_crash': False}
+            })
         #config.logging.log_directory = output_dir
         #if user_debug:
         #    config.enable_debug_mode()
@@ -62,31 +66,31 @@ class Qa(object):
 
 
         # Main workflow
-        wf = pe.Workflow(name="{}_QA".format(utils.PIPELINENAME))
+        wf = pe.Workflow(name="QA_process")
         wf.base_dir = qa_dir
 
 
         # Infosource
-        infields = ['subject_id']
+        infields = ['participant_id']
         infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
-        #infosource.inputs.subject_id = subject_id
-        #print(self.subjects)
-        infosource.iterables = [('subject_id', self.subjects)]
-        #infosource.iterables = [('subject_id', ['PAD115095_NAV'])]
+        #infosource.inputs.participant_id = participant_id
+        #print(self.participants)
+        infosource.iterables = [('participant_id', self.participants)]
+        #infosource.iterables = [('participant_id', ['PAD115095_NAV'])]
 
 
         # SelectFiles
         templates = {
-                "anat": "{subject_id}/mri/T1_out.nii.gz",
-                "atlas": "{subject_id}/mri/aparc+aseg_out.nii.gz",
-                "petreg": "{subject_id}/pet/*/r*mean_maths.nii.gz",
-                "mask": "{subject_id}/mask/cerebellum*/*nii.gz",
-                "suvr": "{subject_id}/suvr/*/cerebellum*/*maths_suvr.nii.gz",
+                "anat": "{participant_id}/anat/sub-{participant_id}_T1w.nii.gz",
+                "atlas": "{participant_id}/anat/sub-{participant_id}_atlas.nii.gz",
+                "petreg": "{participant_id}/pet/*/rsub-*.nii.gz",
+                "mask": "{participant_id}/mask/cerebellum_cortex/sub-{participant_id}*mask.nii.gz",
+                "suvr": "{participant_id}/suvr/*/cerebellum_cortex/*maths_suvr.nii.gz",
                 }
         selectfiles = pe.Node(nio.SelectFiles(templates), 'selectfiles')
         selectfiles.inputs.base_directory = self.in_dir
         selectfiles.inputs.sort_filelist = True
-        #selectfiles.inputs.raise_on_empty = False
+        selectfiles.inputs.raise_on_empty = False
 
 
         # Dashboards Files
@@ -109,7 +113,7 @@ class Qa(object):
         datasink.inputs.base_directory = qa_dir
         #substitutions = compute_substitution(config_dict)
         #datasink.inputs.substitutions = substitutions
-        datasink.inputs.substitutions = (('_subject_id_', ''))
+        datasink.inputs.substitutions = (('_participant_id_', ''))
 
 
         # General connections
@@ -119,7 +123,7 @@ class Qa(object):
         wf.connect([
             (infosource, selectfiles, [[_] *2 for _ in infields]),
             (assetsfiles, datasink, assets_connexions),
-            #(infosource, datasink, [('subject_id', 'container')]),
+            #(infosource, datasink, [('participant_id', 'container')]),
             ])
 
 
@@ -135,7 +139,7 @@ class Qa(object):
         from .interfaces.dashboard import Dashboard
         dashboard = pe.Node(Dashboard(base_dir=qa_dir), 'dashboard')
         wf.connect([
-            (infosource, dashboard, [('subject_id', 'subject_id')]),
+            (infosource, dashboard, [('participant_id', 'participant_id')]),
             (mosaics, dashboard, [
                 ('outputnode.files', 'in_files'),
                 ('outputnode.tags', 'tags'),

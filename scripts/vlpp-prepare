@@ -29,9 +29,9 @@ def get_arguments():
             )
 
     parser.add_argument(
-            '-c', '--csv',
+            '-t', '--tsv',
             required=True,
-            help='csv file',
+            help='tsv file',
             )
 
     return parser.parse_args()

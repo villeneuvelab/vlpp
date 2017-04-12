@@ -34,11 +34,11 @@ class Validation(object):
             pass
 
     @property
-    def _subject_id(self):
-        """Return subject id
+    def _participant_id(self):
+        """Return participant id
         """
-        if 'subject_id' in self.arguments:
-            return self.arguments['subject_id']
+        if 'participant_id' in self.arguments:
+            return self.arguments['participant_id']
         else:
             #TODO: print warning
             pass
@@ -55,13 +55,13 @@ class Validation(object):
             output_dir = self.arguments['output_dir']
             return os.path.join(
                     os.path.abspath(output_dir),
-                    self._subject_id,
+                    self._participant_id,
                     )
         else:
             return os.path.join(
                     self._base_dir,
                     'output',
-                    self._subject_id,
+                    self._participant_id,
                     )
 
     @property
@@ -72,13 +72,13 @@ class Validation(object):
             working_dir = self.arguments['working_dir']
             return os.path.join(
                     os.path.abspath(working_dir),
-                    self._subject_id,
+                    self._participant_id,
                     )
         else:
             return os.path.join(
                     self._base_dir,
                     'working_dir',
-                    self._subject_id,
+                    self._participant_id,
                     )
 
     def set_config_dict(self):
@@ -89,7 +89,7 @@ class Validation(object):
                 APP_DIR, 'config', 'config_default.json')
         defaultConfig = load_json(defaultConfigFile)
 
-        studyConfigFile = os.path.join(self._base_dir, "config.json")
+        studyConfigFile = os.path.join(self._base_dir, "code", "config.json")
         if os.path.exists(studyConfigFile):
             studyConfig = merge(defaultConfig, load_json(studyConfigFile))
         else:
@@ -99,7 +99,7 @@ class Validation(object):
                 "arguments": {
                     "pet_dir": self._pet_dir,
                     "fs_dir": self._fs_dir,
-                    "subject_id": self._subject_id,
+                    "participant_id": self._participant_id,
                     "output_dir": self._output_dir,
                     "working_dir": self._working_dir,
                     },

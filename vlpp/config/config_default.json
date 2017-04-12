@@ -2,7 +2,7 @@
     "arguments": {
         "pet_dir": "",
         "fs_dir": "",
-        "subject_id": "",
+        "participant_id": "",
         "output_dir": "",
         "working_dir": ""
     },

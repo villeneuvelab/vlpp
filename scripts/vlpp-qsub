@@ -18,7 +18,7 @@ def get_arguments():
 
     parser.add_argument(
             '-w', '--walltime',
-            required=False, default="1:30:00",
+            required=False, default="2:00:00",
             help='walltime',
             )
 
@@ -32,6 +32,12 @@ def get_arguments():
             '-d', '--dry',
             required=False, action='store_true',
             help='Save qsub script but do not run qsub',
+            )
+
+    parser.add_argument(
+            '--qa',
+            required=False, action='store_true',
+            help='Launch Quality assessment',
             )
 
     return parser.parse_args()

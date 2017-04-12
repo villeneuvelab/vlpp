@@ -17,7 +17,7 @@ from .lib import utils
 def compute_substitution(config):
     rsl = []
 
-    rsl.append(('_subject_id_', ''))
+    rsl.append(('_participant_id_', ''))
 
     for s in config["smoothing"]["fwhm"]:
         val = "fwhm_{}".format(s)
@@ -38,7 +38,7 @@ def main_workflow(config_dict):
     #user_debug = config_dict['arguments']['debug']
     pet_dir = config_dict['arguments']['pet_dir']
     fs_dir = config_dict['arguments']['fs_dir']
-    subject_id = config_dict['arguments']['subject_id']
+    participant_id = config_dict['arguments']['participant_id']
 
 
     # Directories
@@ -61,9 +61,9 @@ def main_workflow(config_dict):
 
 
     # Infosource
-    infields = ['subject_id']
+    infields = ['participant_id']
     infosource = pe.Node(niu.IdentityInterface(fields=infields), 'infosource')
-    infosource.inputs.subject_id = subject_id
+    infosource.inputs.participant_id = participant_id
 
 
     # PET Files
@@ -89,7 +89,7 @@ def main_workflow(config_dict):
     # General connections
     wf.connect([
         (infosource, petfiles, [[_] *2 for _ in infields]),
-        #(infosource, datasink, [('subject_id', 'container')]),
+        #(infosource, datasink, [('participant_id', 'container')]),
         ])
     wf.add_nodes([datasink, fssource])
 
@@ -99,7 +99,7 @@ def main_workflow(config_dict):
     ## Preparation
     from .workflows.preparation import Preparation
     _tag = 'preparation'
-    preparation = Preparation(config_dict[_tag], _tag).wf
+    preparation = Preparation(config_dict[_tag], _tag, participant_id).wf
     if preparation is not None:
         wf.connect([
             #(petfiles, preparation, [('frametimes', 'inputnode.frametimes')]),
@@ -108,8 +108,8 @@ def main_workflow(config_dict):
             (fssource, preparation, [('aparc_aseg', 'inputnode.atlas')]),
             (preparation, datasink, [
                 ('outputnode.pet', 'pet.@pet-preparation'),
-                ('outputnode.anat', 'mri.@anat-preparation'),
-                ('outputnode.atlas', 'mri.@atlas-preparation'),
+                ('outputnode.anat', 'anat.@anat-preparation'),
+                ('outputnode.atlas', 'anat.@atlas-preparation'),
                 ]),
             ])
 
@@ -175,7 +175,6 @@ def main_workflow(config_dict):
     tplreg = Tplreg(config_dict[_tag], _tag).wf
     if tplreg is not None:
         pass
-    '''
 
 
     ## Segmentation
@@ -191,6 +190,7 @@ def main_workflow(config_dict):
             (segmentation, datasink,
                 [('outputnode.seg', 'mri.@segmentation')]),
             ])
+    '''
 
 
     # SUVR
@@ -220,11 +220,7 @@ def main_workflow(config_dict):
             ])
 
 
-    # QA
-    #from .workflows.qa import Qa
-    #qa = Qa(config_dict['qa'], 'Qa')
-    #qa.implement(wf)
-
+    '''
     # Partial Volume Correction
     from .workflows.pvc import Pvc
     _tag = 'pvc'
@@ -258,6 +254,7 @@ def main_workflow(config_dict):
             (pvcsuvr, pvcstatsrois, [('outputnode.suvr', 'inputnode.suvr')]),
             (pvcstatsrois, datasink, [('outputnode.stats', 'stats.@pvcstatsrois')]),
             ])
+    '''
 
 
     return wf
