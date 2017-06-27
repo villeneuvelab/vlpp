@@ -16,10 +16,11 @@ from .lib import utils
 
 class Qa(object):
 
-    def __init__(self, config):
+    def __init__(self, config, args):
         self.wd = os.getcwd()
         self.in_dir = os.path.join(self.wd, 'output')
         self.config = config
+        self.participants = [args.participant_id]
         self.wf = self.set_wf()
 
 
@@ -27,7 +28,7 @@ class Qa(object):
         self.wf.write_graph(graph2use='colored')
         self.wf.run()
 
-
+    '''
     @property
     def participants(self):
         """
@@ -40,6 +41,7 @@ class Qa(object):
             else:
                 pass
         return participants
+    '''
 
 
     def set_wf(self):

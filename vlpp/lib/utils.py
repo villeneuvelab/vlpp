@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-import glob
 import json
 import os
 
@@ -26,20 +25,6 @@ def print_json(data, msg=None):
     if msg != None: print(msg)
     print(json.dumps(data, indent=4))
     print
-
-def pet_type(globInput):
-    pet = glob.glob(globInput)
-
-    #extension
-    base, ext = os.path.splitext(pet[0])
-    if ext == '.gz':
-        ext = '{}{}'.format(os.path.splitext(base)[1], ext)
-    ext = ext[1:]
-
-    if len(pet) == 1:
-        pass
-
-    return {"ext": ext}
 
 
 # Class

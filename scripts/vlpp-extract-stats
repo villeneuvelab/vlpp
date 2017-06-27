@@ -2,32 +2,79 @@
 # -*- coding: utf-8 -*-
 
 
+import argparse
 import pandas
 import glob
 import os
+import sys
 
 
-DATA_DIR = '/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
-output = os.path.join(DATA_DIR, 'roi_means_ref_cereb_subjects.csv')
+def get_arguments():
+
+    parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            description="""
+            """,
+            epilog="""
+
+            Documentation at https://github.com/villeneuvelab/vlpp
+            Please report any issues there
+
+            """)
+
+    '''
+    parser.add_argument(
+            '-p', '--pet_dir',
+            required=True,
+            help='pet directory of the participant'
+            )
+
+    parser.add_argument(
+            '-s', '--participant_id',
+            required=True,
+            help='participant ID'
+            )
+
+    parser.add_argument(
+            '-f', '--fs_dir',
+            required=True,
+            help='freesurfer directory of the participant'
+            )
+
+    parser.add_argument(
+            '-c', '--config_file',
+            required=True,
+            help='Path to a json config file',
+            )
+    '''
+
+    return parser.parse_args()
 
 
+def main():
+    dataDir = os.getcwd()
+    #'/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
+    output = os.path.join(dataDir, 'means_rois_ref_cerebellumcortex.csv')
 
-subjects = []
-datas = []
-for dataFile in glob.glob('{}/output/*/Segstats/merged_stats.csv'.format(DATA_DIR)):
-    subjects.append(dataFile.split("/")[-3])
-    datas.append(pandas.read_csv(dataFile))
+    subjects = []
+    datas = []
+    dataFiles = glob.glob('{}/output/*/stats/fwhm_6/cerebellum_cortex/*.csv'.format(dataDir))
+    for dataFile in dataFiles:
+        subjects.append(dataFile.split("/")[-5])
+        datas.append(pandas.read_csv(dataFile))
 
-df = pandas.concat(datas, keys=subjects)
+    df = pandas.concat(datas, keys=subjects)
+    meandf = df.get(['StructName', 'mean'])
 
-meandf = df.get(['StructName', 'mean'])
+    rsldf = pandas.DataFrame()
+    for struct in meandf['StructName'].xs(subjects[0]):
+        tempdf = meandf[meandf['StructName'] == struct]
+        tempdf = tempdf.rename(columns={'mean':struct}).reset_index(level=1)
+        rsldf[struct] = tempdf[struct]
 
-rsldf = pandas.DataFrame()
-for struct in meandf['StructName'].xs('PAD115095_NAV'):
-    tempdf = meandf[meandf['StructName'] == struct]
-    tempdf = tempdf.rename(columns={'mean':struct}).reset_index(level=1)
-    rsldf[struct] = tempdf[struct]
+    rsldf = rsldf.sort_index()
+    rsldf.to_csv(output)
 
-rsldf = rsldf.sort_index()
-rsldf.to_csv(output)
+if __name__ == '__main__':
+    sys.exit(main())
 

@@ -11,33 +11,43 @@ from vlpp.lib.qsub import Qsub
 def get_arguments():
 
     parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""
+            Documentation at https://github.com/villeneuvelab/vlpp
+            Please report any issues there
             """,
             epilog="""
+            "Pas de problème, où est le manuel ?"
             """)
 
     parser.add_argument(
-            '-w', '--walltime',
-            required=False, default="2:00:00",
-            help='walltime',
+            '-p', '--pet_dir',
+            required=False,
+            help='Base directory for all of your PET data',
+            )
+
+    parser.add_argument(
+            '-f', '--fs_dir',
+            required=False,
+            help='Base directory for all of your freesurfer data',
+            )
+
+    parser.add_argument(
+            '-t', '--tsv',
+            required=False,
+            help='A tsv file describing your participants',
             )
 
     parser.add_argument(
             '-r', '--rapid',
-            required=True,
-            help='RAPid on guillimin',
-            )
-
-    parser.add_argument(
-            '-d', '--dry',
-            required=False, action='store_true',
-            help='Save qsub script but do not run qsub',
+            required=False, default="yai-974-aa",
+            help='Your RAPid number on guillimin',
             )
 
     parser.add_argument(
             '--qa',
             required=False, action='store_true',
-            help='Launch Quality assessment',
+            help='Launch the quality assessment',
             )
 
     return parser.parse_args()

@@ -1,11 +1,46 @@
 # VLPP: Villeneuve Laboratory PET Pipeline
 
-## Using it at the lab
+## Basic help
+
+```
+$ vlpp -h
+usage: vlpp [-h] -p PET_DIR [-i PARTICIPANT_ID] [-f FS_DIR] [-c CONFIG_FILE]
+            [-o OUTPUT_DIR]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PET_DIR, --pet_dir PET_DIR
+                        Directory with your PET dataset for one participant.
+                        By default, the pipeline will select all the ".nii.gz"
+                        files inside the directory. To change this behaviour,
+                        change the value of ["selectfiles"]["pet"] inside your
+                        configuration file.
+  -i PARTICIPANT_ID, --participant_id PARTICIPANT_ID
+                        Participant identification. By default, it will be the
+                        PET directory name.
+  -f FS_DIR, --fs_dir FS_DIR
+                        Directory with the freesurfer pipeline of the
+                        participant.
+  -c CONFIG_FILE, --config_file CONFIG_FILE
+                        Path to a json configuration file. The pipeline
+                        configures itself by looking into several files.
+                        First, it looks into the default file inside the
+                        installation directory
+                        (vlpp/config/config_default.json). Then, if the file
+                        exists, it looks inside the current directory in
+                        "code/config.json". Finally it looks to the file given
+                        with this option.
+  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
+                        Output directory. By default, this is the current
+                        directory.
+```
+
+## Using the pipeline on `guillimin`
 
 ### Setting up you environment
 
 If you have access to guillimin cluster, the pipeline is already installed.
-You have to setup your environment correctly:
+To be able to use it, you have to setup your environment correctly:
 
 ```
 ssh -Y <username>@guillimin.hpc.mcgill.ca
@@ -14,16 +49,36 @@ module load VilleneuveLab
 source activate vlpp
 ```
 
-## Using the pipeline
+Please, follow the instructions on "How to access neuroimaging softwares" and "How to setup spm for matlab" from [here](https://github.com/villeneuvelab/documentation/wiki/Guillimin-neuroimaging-softwares)
+
+### Launch with one participant
+
+As you can see in the help above, the pipeline needs at least two directories (the one with your PET data and the freesurfer directory.
+
+`vlpp -p <path_to_pet_data> -f <path_to_freesurfer>`
+
+If your PET data is in another format than "*.nii.gz", you can change that through a configuration file (`config.json`):
+
+```
+{
+    "selectfiles": {
+        "pet": "*.mnc"
+    }
+}
+```
+
+`vlpp -p <path_to_pet_data> -f <path_to_freesurfer> -c config.json`
+
+### Launch with several participants
 
 You need to create a new directory in wich you will run all the commands for the processing, for example:
 
 ```
-mkdir vlpp_processing
-cd vlpp_processing
+mkdir pet_processing
+cd pet_processing
 ```
 
-In this tutorial, we suppose that your data have this structure:
+In this example, we suppose that your data have this structure:
 
 ```
 /path
@@ -35,37 +90,19 @@ In this tutorial, we suppose that your data have this structure:
   |--data
     |--pet
       |--subject_00_20170308
-        |--NAV_subject_00_20170308_1435.nii.gz
+        |--NAV_subject_00_20170308_1435.mnc
       |--subject_01_20170315
-        |--NAV_subject_01_20170315_1126.nii.gz
+        |--NAV_subject_01_20170315_1126.mnc
 ```
 
-### Prepare your data
+#### configuration file
 
-The tool `vlpp-prepare` is here to help setting things up for several subjects. With this kind of structures you would have to create a `participants.tsv` file with at least 3 columns (participant_id, fs_dir, pet_dir). A tsv (tabulation-separated values) file is the same as a csv file but tabulation is used to separated data.
-
-| participant_id | fs_dir | pet_dir |
-| --- | --- | --- |
-| subject_00 | subject_00_type1 | subject_00_20170308 |
-| subject_01 | subject_01_type1 | subject_01_20170315 |
-
-Now, you can run the command:
-
-`vlpp-prepare -f /path/freesurfer/subjects -p /other_path/data/pet -t participants.tsv`
-
-It will create a `code` directory with a json file for each subjects. Here is an example of `code/subject_00.json`:
+This step is optional and is needed if you want to run the pipeline with different options than the default (see here for more informations). Inside your processing directory, create a `code` directory with a new `config.json` file. The pipeline will automatically looks into this file and update the default configuration to fit your study.
 
 ```
-{
-    "arguments": {
-        "fs_dir": "/path/freesurfer/subjects/subject_00_type1",
-        "pet_dir": "/other_path/data/pet/subject_00_20170308",
-        "subject_id": "subject_00"
-    }
-}
+mkdir code
+touch code/config.json
 ```
-
-The last step is to create the configuration file of your study: `touch code/config.json`. The pipeline will automatically looks into this file and update the default configuration to fit your study. If you want to change a configuration at the subjects level, you will need to edit the json file of the subject in the `code` directory.
 
 The pipeline needs to know how to access your pet data. It is done with a generic string in the `pet` key inside the `selectfiles` configuration. Here is the content of `code/config.json` for the tutorial example:
 
@@ -77,15 +114,40 @@ The pipeline needs to know how to access your pet data. It is done with a generi
 }
 ```
 
-As you can see, it is possible to use the `participant_id` inside curly braces to indicate the participant name.
+Since there is only one _minc_ file in the example, the value could simply be "*.mnc". The example above was to show, it is possible to use the `participant_id` inside curly braces to indicate the participant name.
 
-### Submitting the pipeline on guillimin queues
+#### `vlpp-qsub`
 
-This is done with `vlpp-qsub` and with your Resource Allocation Project identifier (RAPid). `vlpp-qsub -r <RAPid>`
+```
+$ vlpp-qsub -h
+usage: vlpp-qsub [-h] [-p PET_DIR] [-f FS_DIR] [-t TSV] [-r RAPID] [--qa]
 
-### Quality Assessment
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PET_DIR, --pet_dir PET_DIR
+                        Base directory for all of your PET data
+  -f FS_DIR, --fs_dir FS_DIR
+                        Base directory for all of your freesurfer data
+  -t TSV, --tsv TSV     A tsv file describing your participants
+  -r RAPID, --rapid RAPID
+                        Your RAPid number on guillimin
+  --qa                  Launch the quality assessment
+```
 
-`vlpp-qsub -r <RAPid> --qa`
+The tool `vlpp-qsub` is here to help submitting the pipeline through `qsub` on guillimin. With this kind of structure (describe above) you would have to create a `participants.tsv` file with at least 3 columns (participant_id, fs_dir, pet_dir). A tsv (tabulation-separated values) file is the same as a csv file but tabulation is used to separated data.
+
+| participant_id | fs_dir | pet_dir |
+| --- | --- | --- |
+| subject_00 | subject_00_type1 | subject_00_20170308 |
+| subject_01 | subject_01_type1 | subject_01_20170315 |
+
+Now, you can run the command:
+
+`vlpp-qsub -f /path/freesurfer/subjects -p /other_path/data/pet -t participants.tsv`
+
+#### Quality Assessment
+
+`vlpp-qsub --qa`
 
 ## Install
 

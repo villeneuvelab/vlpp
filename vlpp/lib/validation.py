@@ -2,110 +2,140 @@
 
 
 from jsonmerge import merge
+import glob
 import os
-from .utils import APP_DIR, load_json, pet_type, write_json
+import sys
+from .utils import APP_DIR, load_json
 
 
 class Validation(object):
 
     def __init__(self, args):
-        self.config_file = os.path.abspath(args.config_file)
-        self.arguments = load_json(self.config_file)['arguments']
-        self.config_dict = self.set_config_dict()
+        self.pet_dir = self._pet_dir(args.pet_dir)
+        self.participant_id = self._participant_id(args.participant_id)
+        self.fs_dir = self._fs_dir(args.fs_dir)
+        self.output_dir = self._output_dir(args.output_dir)
+        self.working_dir = self._working_dir()
 
-    @property
-    def _pet_dir(self):
-        """Return absolute path of the pet directory
-        """
-        if 'pet_dir' in self.arguments:
-            return self.arguments['pet_dir']
+        if args.config_file:
+            self.argsConfig = load_json(args.config_file)
         else:
-            #TODO: print warning
-            pass
+            self.argsConfig = {}
+        self.config_dict = self._config_dict()
 
-    @property
-    def _fs_dir(self):
-        """Return absolute path of the freesurfer directory
+
+    def _pet_dir(self, pet_dir):
         """
-        if 'fs_dir' in self.arguments:
-            return self.arguments['fs_dir']
-        else:
-            #TODO: print warning
-            pass
-
-    @property
-    def _participant_id(self):
-        """Return participant id
+        Check if pet_dir exist and return absolute path
         """
-        if 'participant_id' in self.arguments:
-            return self.arguments['participant_id']
+        if os.path.exists(pet_dir):
+            return os.path.abspath(pet_dir)
         else:
-            #TODO: print warning
-            pass
+            sys.exit("Directory does not exist: {}".format(pet_dir))
 
-    @property
-    def _base_dir(self):
-        return os.path.dirname(os.path.dirname(self.config_file))
 
-    @property
-    def _output_dir(self):
-        """Return absolute path of the output
+    def _participant_id(self, id):
         """
-        if 'output_dir' in self.arguments:
-            output_dir = self.arguments['output_dir']
-            return os.path.join(
-                    os.path.abspath(output_dir),
-                    self._participant_id,
-                    )
+        Return participant_id, if not set it returns the pet directory name
+        """
+        if id:
+            return id
         else:
-            return os.path.join(
-                    self._base_dir,
-                    'output',
-                    self._participant_id,
-                    )
+            return os.path.basename(os.path.normpath(self.pet_dir))
 
-    @property
+
+    def _fs_dir(self, fs_dir):
+        """
+        Check if fs_dir exist and return absolute path
+        If no fs_dir was provided by the user, the function guess that fs_dir is
+        a directory named "freesurfer" inside pet_dir.
+        """
+        if fs_dir:
+            if os.path.exists(fs_dir):
+                return os.path.abspath(fs_dir)
+            else:
+                sys.exit("Directory does not exist: {}".format(fs_dir))
+        else:
+            print("No freesurfer directory was provided")
+            guess = os.path.join(self.pet_dir, "freesurfer")
+            if os.path.exists(guess):
+                print("Freesurfer directory found: {}".format(guess))
+                return guess
+            else:
+                sys.exit("No freesurfer directory found")
+
+
+    def _output_dir(self, output_dir):
+        """
+        Return absolute path of the output
+        """
+        if output_dir:
+            return os.path.join(os.path.abspath(output_dir), self.participant_id)
+        else:
+            return os.path.join(os.getcwd(), 'output', self.participant_id)
+
+
     def _working_dir(self):
-        """Return absolute path of working directory
         """
-        if 'working_dir' in self.arguments:
-            working_dir = self.arguments['working_dir']
-            return os.path.join(
-                    os.path.abspath(working_dir),
-                    self._participant_id,
-                    )
-        else:
-            return os.path.join(
-                    self._base_dir,
-                    'working_dir',
-                    self._participant_id,
-                    )
+        Return absolute path of working directory
+        """
+        return os.path.join(
+                os.getcwd(), 'output', 'working_dir', self.participant_id)
 
-    def set_config_dict(self):
-        """Return a configuration dictionnary
+
+    def _config_dict(self):
+        """
+        Return a configuration dictionnary
         Load the default dictionnary from config_default.json file and update it
         """
-        defaultConfigFile = os.path.join(
-                APP_DIR, 'config', 'config_default.json')
+        defaultConfigFile = os.path.join(APP_DIR, 'config', 'config_default.json')
         defaultConfig = load_json(defaultConfigFile)
 
-        studyConfigFile = os.path.join(self._base_dir, "code", "config.json")
+        studyConfigFile = os.path.join(os.getcwd(), "code", "config.json")
         if os.path.exists(studyConfigFile):
             studyConfig = merge(defaultConfig, load_json(studyConfigFile))
         else:
             studyConfig = defaultConfig
 
+        config_dict = merge(studyConfig, self.argsConfig)
+
         subjectConfig = {
                 "arguments": {
-                    "pet_dir": self._pet_dir,
-                    "fs_dir": self._fs_dir,
-                    "participant_id": self._participant_id,
-                    "output_dir": self._output_dir,
-                    "working_dir": self._working_dir,
+                    "pet_dir": self.pet_dir,
+                    "fs_dir": self.fs_dir,
+                    "participant_id": self.participant_id,
+                    "output_dir": self.output_dir,
+                    "working_dir": self.working_dir,
                     },
-                "preparation": pet_type(os.path.join(
-                        self._pet_dir, studyConfig["selectfiles"]["pet"]))
+                "preparation": self._pet_type(studyConfig["selectfiles"]["pet"])
                 }
 
-        return merge(studyConfig, subjectConfig)
+        return merge(config_dict, subjectConfig)
+
+
+    def _pet_type(self, selectfiles):
+        """
+        """
+        globInput = os.path.join(self.pet_dir, selectfiles)
+        pet = glob.glob(globInput)
+
+        num = len(pet)
+        if num == 0:
+            msg = "No pet images were found with this parser: {}"
+            sys.exit(msg.format(globInput))
+        elif num == 1:
+            size = "one"
+        else:
+            size = "several"
+
+        #extension
+        base, ext = os.path.splitext(pet[0])
+        if ext == '.gz':
+            ext = '{}{}'.format(os.path.splitext(base)[1], ext)
+        ext = ext[1:]
+
+        return {
+                "file": size,
+                "ext": ext,
+                }
 

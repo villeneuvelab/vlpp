@@ -18,6 +18,12 @@ def get_arguments():
             epilog="""
             """)
 
+    parser.add_argument(
+            '-i', '--participant_id',
+            required=True,
+            help='participant ID'
+            )
+
     return parser.parse_args()
 
 
@@ -29,7 +35,7 @@ def main():
     config = load_json(configFile)
 
     # App
-    app = Qa(config)
+    app = Qa(config, args)
     app.run()
     return 0
 

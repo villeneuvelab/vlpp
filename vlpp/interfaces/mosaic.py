@@ -40,7 +40,7 @@ class Mosaic(BaseInterface):
         suffix = self.inputs.suffix
 
         _, name, _ = split_filename(in_file)
-        self._mosaic_file_path = opa('{}_mosaic_{}.png'.format(name, suffix))
+        self._mosaic_file_path = opa('{}_mosaic_{}.jpg'.format(name, suffix))
         #self._html_file_path = opa('{}_mosaic{}.html'.format(name, postfix))
 
         m = mosaic.Mosaic(in_file)

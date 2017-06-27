@@ -8,8 +8,8 @@ import os
 import shutil
 import sys
 
-from vlpp.lib import utils, validation
-from vlpp.vlpp import main_workflow
+from vlpp.lib import utils
+from vlpp.vlpp import App
 
 
 def get_arguments():
@@ -17,18 +17,41 @@ def get_arguments():
     parser = argparse.ArgumentParser(
             formatter_class=argparse.RawDescriptionHelpFormatter,
             description="""
-            """,
-            epilog="""
-
             Documentation at https://github.com/villeneuvelab/vlpp
             Please report any issues there
-
+            """,
+            epilog="""
+            "Pas de problème, où est le manuel ?"
             """)
 
     parser.add_argument(
-            '-c', '--config_file',
+            '-p', '--pet_dir',
             required=True,
-            help='Path to a json config file',
+            help='Directory with your PET dataset for one participant. By default, the pipeline will select all the ".nii.gz" files inside the directory. To change this behaviour, change the value of ["selectfiles"]["pet"] inside your configuration file.'
+            )
+
+    parser.add_argument(
+            '-i', '--participant_id',
+            required=False,
+            help='Participant identification. By default, it will be the PET directory name.'
+            )
+
+    parser.add_argument(
+            '-f', '--fs_dir',
+            required=False,
+            help='Directory with the freesurfer pipeline of the participant.'
+            )
+
+    parser.add_argument(
+            '-c', '--config_file',
+            required=False,
+            help='Path to a json configuration file. The pipeline configures itself by looking into several files. First, it looks into the default file inside the installation directory (vlpp/config/config_default.json). Then, if the file exists, it looks inside the current directory in "code/config.json". Finally it looks to the file given with this option.',
+            )
+
+    parser.add_argument(
+            '-o', '--output_dir',
+            required=False,
+            help='Output directory. By default, this is the current directory.'
             )
 
     return parser.parse_args()
@@ -36,12 +59,9 @@ def get_arguments():
 
 def main():
 
-    # Arguments
-    args = get_arguments()
-    argsValidated = validation.Validation(args)
-
     # Main workflow
-    wf = main_workflow(argsValidated.config_dict)
+    app = App(get_arguments())
+    wf = app.wf
 
     # Graph
     #graph2use: 'orig', 'hierarchical' (default), 'flat', 'exec', 'colored'
@@ -63,7 +83,7 @@ def main():
     '''
 
     # Cleaning
-    output_dir = argsValidated.config_dict['arguments']['output_dir']
+    output_dir = app.config_dict['arguments']['output_dir']
     log_dir = os.path.join(output_dir, "log")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
@@ -79,18 +99,18 @@ def main():
 
     #graph
     graph_file = os.path.join(
-            argsValidated.config_dict['arguments']['working_dir'],
+            app.config_dict['arguments']['working_dir'],
             utils.PIPELINENAME, 'graph.dot.png')
     shutil.copy2(
             graph_file, os.path.join(log_dir, 'graph-{}.dot.png'.format(now)))
 
     #config
     utils.write_json(
-            argsValidated.config_dict,
+            app.config_dict,
             os.path.join(log_dir, "config-{}.json".format(now))
             )
 
-    """
+    '''
     import subprocess
     try:
         wf.run()
@@ -98,7 +118,7 @@ def main():
         shutil.rmtree(tmpDir, ignore_errors=True)
         suprocess.call( ['rsync', '-a', myscratch, myhome])
         shutil.rmtree(myscratch)
-    """
+    '''
 
     return 0
 
