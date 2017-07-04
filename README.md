@@ -20,7 +20,9 @@ optional arguments:
                         PET directory name.
   -f FS_DIR, --fs_dir FS_DIR
                         Directory with the freesurfer pipeline of the
-                        participant.
+                        participant. If no fs_dir is provided by the user, the
+                        script guesses that fs_dir is a directory named
+                        "freesurfer" inside pet_dir.
   -c CONFIG_FILE, --config_file CONFIG_FILE
                         Path to a json configuration file. The pipeline
                         configures itself by looking into several files.
