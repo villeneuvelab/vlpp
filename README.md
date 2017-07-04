@@ -51,7 +51,7 @@ source activate vlpp
 
 Please, follow the instructions on "How to access neuroimaging softwares" and "How to setup spm for matlab" from [here](https://github.com/villeneuvelab/documentation/wiki/Guillimin-neuroimaging-softwares)
 
-### Launch with one participant
+### Launch with one participant localy
 
 As you can see in the help above, the pipeline needs at least two directories (the one with your PET data and the freesurfer directory.
 
@@ -68,6 +68,21 @@ If your PET data is in another format than "*.nii.gz", you can change that throu
 ```
 
 `vlpp -p <path_to_pet_data> -f <path_to_freesurfer> -c config.json`
+
+### Launch with one participant with `qsub`
+
+You need to create a new directory in wich you will run the qsub command, for example:
+
+```
+mkdir pet_processing
+cd pet_processing
+```
+
+Create a `code` directory to stock your qsub script (`mkdir code`)
+
+Copy the qsub script template `qsub_guillimin_helper.sh` inside the code directory. On guillimin: `cp /sf1/project/yai-974-aa/local/vlpp/git/vlpp/templates/qsub_guillimin_helper.sh code/qsub_<participant_code>.sh`
+
+Edit this script to your need. [Link to the template](https://github.com/villeneuvelab/vlpp/blob/master/vlpp/templates/qsub_guillimin_helper.sh)
 
 ### Launch with several participants
 
