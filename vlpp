@@ -1,0 +1,440 @@
+#!/usr/bin/env nextflow
+/*
+vim: syntax=groovy
+-*- mode: groovy;-*-
+
+Author:
+ - Christophe Bedetti <christophe.bedetti@criugm.qc.ca>
+*/
+
+
+/*
+ * Parameters validation
+ */
+
+if ( params.containsKey('help') ) {
+    println """\
+    Execute the vlpp project
+    Usage: vlpp --pet <> --freesurfer <> --participant <> [--tpl <> -params-file <>]
+        Options:
+        --pet
+            Pet file, it could be a .mnc, .nii or .nii.gz
+        --freesurfer
+            Freesurfer directory of your participant
+        --participant
+            Participant code name
+        --tpl
+            Default: MNI152_T1_1mm_brain.nii.gz
+        --help
+            Print vlpp usage
+        Nextflow options:
+        -params-file
+            Load script parameters from a JSON/YAML file
+        -resume
+            Execute the script using the cached results, useful to continue
+            executions that was stopped by an error
+        -h, -help
+            Print the nextflow usage
+    """
+    .stripIndent()
+    System.exit(0)
+}
+
+if( params.containsKey('tpl') ) {
+    tpl = file params.tpl
+    }
+else {
+    //tpl = file baseDir / "atlas" / "MNI152_T1_1mm.nii.gz"
+    tpl = file baseDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
+}
+
+['study', 'tracer', 'realign', 'smooth'].each {
+    if( !params.containsKey(it) ) {
+        params[it] = null
+    }
+}
+
+['pet', 'freesurfer', 'participant'].each {
+    if( !params.containsKey(it) ) {
+        println "The parameter `${it}` is not set"
+        println "`vlpp --help` for vlpp usage"
+        println "`vlpp -help` for nextflow usage"
+        System.exit(0)
+    }
+}
+
+pet_in = file params.pet
+freesurfer_dir = file params.freesurfer
+participant = "sub-" + params.participant
+anat_in = freesurfer_dir / "mri" / "T1.mgz"
+atlas_in = freesurfer_dir / "mri" / "aparc+aseg.mgz"
+suffix = params.suffix
+
+println """\
+        =============
+        V L P P - N F
+        -------------
+        PET file             : ${pet_in}
+        freesurfer directory : ${freesurfer_dir}
+        participant          : ${participant}
+        =============
+        """
+        .stripIndent()
+        //template             : ${tpl.baseName}
+
+
+/*
+ *  Preparation
+ */
+
+process anatconvert {
+
+    publishDir "anat", mode: 'copy', overwrite: true
+
+    input:
+    file img from anat_in
+
+    output:
+    file "*" + suffix.anat into anat
+
+    """
+    mri_convert --out_type nii --input_volume $img \
+        --output_volume ${participant}${suffix.anat}
+    """
+}
+
+process atlasconvert {
+
+    publishDir "anat", mode: 'copy', overwrite: true
+
+    input:
+    file img from atlas_in
+
+    output:
+    file "*" + suffix.atlas into atlas
+
+    """
+    mri_convert --out_type nii --input_volume $img \
+        --output_volume ${participant}${suffix.atlas}
+    """
+}
+
+process petconvert {
+
+    input:
+    file img from pet_in
+
+    output:
+    file 'petconvert.nii.gz' into petnii
+
+    script:
+    template "petconvert.py"
+}
+
+
+/*
+ * Segmentation
+ */
+
+process segmentation {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    file anat
+
+    output:
+    file "mask/s*roi-c1" + suffix.mask into spm_gm
+    file "mask/s*roi-c2" + suffix.mask into spm_wm
+    file "mask/s*roi-c3" + suffix.mask into spm_csf
+    file "mask/s*roi-c4" + suffix.mask into spm_bone
+    file "mask/s*roi-c5" + suffix.mask into spm_soft
+    //file "transform/*" + suffix["anat2tpl_aff"] into anat2tpl_aff
+    file "transform/s*" + suffix.anat2tpl into anat2tpl
+    file "transform/s*" + suffix.tpl2anat into tpl2anat
+
+    script:
+    template "segmentation.sh"
+}
+
+process brainmask {
+
+    publishDir "mask", mode: 'copy', overwrite: true
+
+    input:
+    //file atlas
+    file gm from spm_gm
+    file wm from spm_wm
+    file csf from spm_csf
+
+    output:
+    file "*roi-brain" + suffix.mask into brainmask
+    file "*roi-gmwm" + suffix.mask into gmwmmask
+
+    """
+    brain=${participant}_roi-brain${suffix.mask}
+    gmwm=${participant}_roi-gmwm${suffix.mask}
+    #fslmaths atlas -bin -dilD -dilD -dilD -fillh \$output
+    fslmaths $gm -add $wm -add $csf -fillh -bin \$brain
+
+    fslmaths $gm -thr 0.25 tmp_gm.nii.gz
+    fslmaths $wm -thr 0.25 tmp_wm.nii.gz
+    fslmaths tmp_gm.nii.gz -add tmp_wm.nii.gz -bin \$gmwm
+    """
+}
+
+
+/*
+ *  Realign
+ */
+
+process realign {
+
+    publishDir "tmp", mode: 'copy', overwrite: true
+
+    input:
+    file pet from petnii
+
+    output:
+    file "*tmp-toEstimate" + suffix.pet into petToEstimate
+    file "*tmp-toRegister" + suffix.pet into petToRegister
+    file "*tmp-centiloid" + suffix.pet into petCentiloid
+    file "transform/*"
+
+    script:
+    template "realign.py"
+}
+
+
+/*
+ * Registrations
+ */
+
+process estimate_pet2anat {
+
+    publishDir "transform", mode: 'copy', overwrite: true
+
+    /*
+     *  ANTSImageRegistrationOptimizer error
+     *  https://sourceforge.net/p/advants/discussion/840260/thread/7cf6ba92/
+     *  Just ignore the error
+     */
+    errorStrategy "ignore"
+
+    input:
+    file anat
+    file pet from petToEstimate
+
+    output:
+    file "*" + suffix.pet2anat into pet2anat
+
+    script:
+    template "estimate_pet2anat.sh"
+}
+
+/*
+process estimate_anat2tpl {
+
+    publishDir "transform", mode: 'copy', overwrite: true
+
+    input:
+    file tpl
+    file anat
+    file brainmask
+
+    output:
+    file "*" + suffix["anat2tpl_aff"] into anat2tpl_aff
+    file "*" + suffix["anat2tpl"] into anat2tpl
+    file "*" + suffix["tpl2anat"] into tpl2anat
+
+    script:
+    template "estimate_anat2tpl.sh"
+}
+*/
+
+process apply_transforms_pet {
+
+    publishDir "pet", mode: 'copy', overwrite: true
+
+    input:
+    file anat
+    file tpl
+    file gmwm from gmwmmask
+    file pet from petToRegister
+    file centiloid from petCentiloid
+    file pet2anat
+    //file anat2tpl_aff
+    file anat2tpl
+
+    output:
+    file "*" + suffix.pet
+    file "*" + suffix.petInAnat into petInAnat
+    //file "*" + suffix.petInTpl into petInTpl
+
+    script:
+    template "apply_transforms_pet.py"
+}
+
+
+process apply_transforms_anat {
+
+    publishDir "anat", mode: 'copy', overwrite: true
+
+    input:
+    file anat
+    file tpl
+    file atlas
+    //file anat2tpl_aff
+    file anat2tpl
+
+    output:
+    file "*" + suffix["anatInTpl"] into anatInTpl
+    //file "*" + suffix["atlasInTpl"] into atlasInTpl
+
+    script:
+    template "apply_transforms_anat.py"
+}
+
+
+
+/*
+ *  Pickatlas
+ */
+
+rois = Channel.from(
+    [ "cerebellumCortex", [8, 47] ],
+    [ "cerebellumCortexErode", [8, 47] ],
+    [ "wholeCerebellum", [7, 8, 46, 47] ],
+    [ "whitematter", [2, 41] ],
+    )
+
+process pickatlas {
+
+    publishDir "mask", mode: 'copy', overwrite: true
+
+    input:
+    file atlas
+    set roiName, index from rois
+
+    output:
+    val roiName into roiNamePick, roiNamePickToTpl
+    file "*" + suffix["mask"] into refmask, refmask_tpl
+
+    script:
+    template "pickatlas.py"
+}
+
+/*
+process mask2tpl {
+
+    publishDir "mask", mode: 'copy', overwrite: true
+
+    input:
+    file tpl
+    file anat2tpl_aff
+    file anat2tpl
+    file refmask from refmask_tpl
+
+    output:
+    file "*" + suffix["maskInTpl"] into refmaskInTpl
+
+    """
+    base=${refmask}
+    base=\${base/${suffix["mask"]}}
+    antsApplyTransforms --dimensionality 3 --reference-image ${tpl} \
+        --input ${refmask} --output \${base}${suffix["maskInTpl"]} \
+        --interpolation NearestNeighbor --input-image-type 0 \
+        -t ${anat2tpl} -t ${anat2tpl_aff}
+    """
+}
+*/
+
+
+/*
+ * Suvr
+ */
+
+process suvrcalc {
+
+    publishDir "suvr", mode: 'copy', overwrite: true
+
+    input:
+    file pet from petInAnat
+    val roiName from roiNamePick
+    file mask from refmask
+
+    output:
+    val roiName into roiNameSuvrToDefault, roiNameSuvrToSpec
+    file "*" + suffix["suvr"] into suvrToDefault, suvrToSpec, suvrToTpl
+
+    script:
+    template "suvrcalc.py"
+}
+
+process suvrcalc_tpl {
+
+    publishDir "suvr", mode: 'copy', overwrite: true
+
+    input:
+    file suvr from suvrToTpl
+    val roiName from roiNamePickToTpl
+    file anat2tpl
+
+    output:
+    file "*" + suffix["suvrInTpl"]
+
+    script:
+    template "suvrcalc_tpl.py"
+}
+
+
+/*
+ * Segstats
+ */
+
+process stats_default {
+
+    input:
+    val roiName from roiNameSuvrToDefault
+    file suvr from suvrToDefault
+    file atlas
+
+    output:
+    set roiName, "summary.stats" into statsDefault
+
+    """
+    mri_segstats --ctab-default --excludeid 0 \
+    --i $suvr --seg $atlas --sum summary.stats
+    """
+}
+
+process stats_spec {
+
+    input:
+    val roiName from roiNameSuvrToSpec
+    file suvr from suvrToSpec
+    file atlas
+
+    output:
+    set roiName, "summary_user.stats" into statsSpec
+
+    script:
+    template "stats_spec.py"
+}
+
+
+process stats_merge {
+
+    publishDir "stats", mode: 'copy', overwrite: true
+
+    input:
+    set roiName, file(statsDefault), file(statsSpec) from statsDefault
+            .combine(statsSpec, by: 0)
+
+    output:
+    file "*_stats.csv"
+
+    script:
+    template "stats_merge.py"
+}
+

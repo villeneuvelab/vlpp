@@ -1,9 +1,9 @@
 name: vlpp
 dependencies:
-    - python=3.4
-    - nipype=0.12.1
+    - nextflow
     - graphviz
-    - matplotlib=2.0.0
-    - Jinja2=2.8
-    - pandas=0.19.2
-    - ipython
+    - Jinja2>=2.9.6
+    - matplotlib>=2.0.2
+    - nibabel>=2.1.0
+    - numpy>=1.12.1
+    - pandas>=0.19.2

@@ -3,9 +3,14 @@
 
 
 import argparse
+import glob
+import os
+import pandas
 import sys
+import time
 
-from vlpp.lib.qsub import Qsub
+from jinja2 import Environment, FileSystemLoader
+from subprocess import call
 
 
 def get_arguments():
@@ -16,9 +21,10 @@ def get_arguments():
             Documentation at https://github.com/villeneuvelab/vlpp
             Please report any issues there
             """,
-            epilog="""
-            "Pas de problème, où est le manuel ?"
-            """)
+            #epilog="""
+            #"Pas de problème, où est le manuel ?"
+            #""",
+            )
 
     parser.add_argument(
             '-p', '--pet_dir',
@@ -34,7 +40,7 @@ def get_arguments():
 
     parser.add_argument(
             '-t', '--tsv',
-            required=False,
+            required=True,
             help='A tsv file describing your participants',
             )
 
@@ -45,18 +51,114 @@ def get_arguments():
             )
 
     parser.add_argument(
-            '--qa',
-            required=False, action='store_true',
-            help='Launch the quality assessment',
+            '-m', '--mode',
+            required=False, default="pad",
+            help='How to search for pet date: dian, *pad*',
             )
 
     return parser.parse_args()
 
 
+class Qsub(object):
+
+    def __init__(self, args):
+        self.wd = os.getcwd()
+        self.codeDir = os.path.join(self.wd, "code")
+        self.logDir = os.path.join(self.wd, "log")
+        if not os.path.exists(self.codeDir): os.makedirs(self.codeDir)
+        if not os.path.exists(self.logDir): os.makedirs(self.logDir)
+
+        self.tsv = args.tsv
+        self.mode = args.mode
+        self.args = args
+
+        self.df = pandas.read_csv(
+                self.tsv, delimiter='\t', comment="#", dtype=object)
+
+        self.tags = {
+                "RAPid": args.rapid,
+                "logDir": self.logDir,
+                "walltime": "1:00:00",
+                }
+
+    def petFile(self, line):
+        if self.mode == "pad":
+            return glob.glob(os.path.join(
+                    "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
+                    "pet", "sourcedata", line.pet_dir, "*_4D_*1.mnc"))[0]
+        elif self.mode == "dian":
+            ses = line.ses
+            baseDir = line.PIB_pwd
+            baseDir = baseDir.replace(
+                    "/home/gonjil/project_yai",
+                    "/sf1/project/yai-974-aa")
+            imgName = line.img-name
+            imgName = imgName.replace(".gz", "")
+            return os.path.join(baseDir, imgName)
+        else:
+            if self.args.pet_dir:
+                return os.path.abspath(self.args.pet_dir)
+            else:
+                print("`{0}` mode is not implemented, please use `-p` option`")
+                print("See --help for more informations")
+
+    def fsDir(self, line):
+        if self.mode == "pad":
+            return os.path.join(
+                    "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
+                    "pet", "derivatives", "freesurfer", line.fs_dir)
+        elif self.mode == "dian":
+            return os.path.join(
+                    "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
+                    "derivatives", "freesurfer-v5.3.0",
+                    "sub-" + line.sub-ID + "_ses-" + line.ses)
+            return
+        else:
+            if self.args.fs_dir:
+                return os.path.abspath(self.args.fs_dir)
+            else:
+                print("`{0}` mode is not implemented, please use `-f` option`")
+                print("See --help for more informations")
+
+    def participant(self, line):
+        if self.mode == "pad":
+            return line.participant_id
+        elif self.mode == "dian":
+            return line.sub-ID + "_ses-" + line.ses
+
+    def run(self):
+
+        args = []
+        for index, line in self.df.iterrows():
+            participant_id = self.participant(line)
+            tags = {
+                    "participant": participant_id,
+                    "pet": self.petFile(line),
+                    "freesurfer": self.fsDir(line),
+                    }
+            tags = dict(self.tags, **tags)
+
+            qsubName = "vlpp_{}.sh".format(participant_id)
+            qsubScript = os.path.join(self.codeDir, qsubName)
+            self.tpl.stream(**tags).dump(qsubScript)
+
+            call("qsub {}".format(qsubScript), shell=True)
+            #time.sleep(0.2)
+
+
+    @property
+    def tpl(self):
+        APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        env = Environment(
+                loader=FileSystemLoader(os.path.join(APP_DIR, 'templates')),
+                trim_blocks=True,
+                )
+        return env.get_template("guillimin_qsub.sh")
+
+
 def main():
     args = get_arguments()
-    app = Qsub(args)
-    app.run()
+    Qsub(args).run()
     return 0
 
 if __name__ == '__main__':

@@ -1,0 +1,5 @@
+Jinja2>=2.9.6
+matplotlib>=2.0.2
+nibabel>=2.1.0
+numpy>=1.12.1
+pandas>=0.19.2

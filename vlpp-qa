@@ -1,0 +1,174 @@
+#!/usr/bin/env nextflow
+/*
+vim: syntax=groovy
+-*- mode: groovy;-*-
+
+Author:
+ - Christophe Bedetti <christophe.bedetti@criugm.qc.ca>
+*/
+
+
+/*
+ * Parameters validation
+ */
+
+if ( params.containsKey('help') ) {
+    println """\
+    Execute the vlpp project
+    Usage: vlpp-qa --vlpp_dir <> --freesurfer <> --participant <> [--tpl <> -params-file <>]
+        Options:
+        --vlpp_dir
+            Directory containing all your subjects directories
+        --freesurfer
+            Freesurfer directory of your participant
+        --participant
+            Participant code name
+        --tpl
+            Default: MNI152_T1_1mm_brain.nii.gz
+        --help
+            Print vlpp usage
+        Nextflow options:
+        -params-file
+            Load script parameters from a JSON/YAML file
+        -resume
+            Execute the script using the cached results, useful to continue
+            executions that was stopped by an error
+        -h, -help
+            Print the nextflow usage
+    """
+    .stripIndent()
+    System.exit(0)
+}
+
+if( params.containsKey('tpl') ) {
+    tpl = file params.tpl
+    }
+else {
+    //tpl = file baseDir / "atlas" / "MNI152_T1_1mm.nii.gz"
+    tpl = file baseDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
+}
+
+/*
+['study', 'tracer', 'realign', 'smooth'].each {
+    if( !params.containsKey(it) ) {
+        params[it] = null
+    }
+}
+*/
+
+/*
+['vlpp_dir'].each {
+    if( !params.containsKey(it) ) {
+        println "The parameter `${it}` is not set"
+        println "`vlpp --help` for vlpp usage"
+        println "`vlpp -help` for nextflow usage"
+        System.exit(0)
+    }
+}
+*/
+
+suffix = params.suffix
+
+/*
+println """\
+        ===================
+        V L P P - Q A - N F
+        -------------------
+        template       : ${tpl.baseName}
+        ===================
+        """
+        .stripIndent()
+*/
+
+
+/*
+ * SelectFiles
+ */
+
+subjects = Channel
+    .fromPath( workflow.launchDir / ".." / "sub-*", type: 'dir' )
+    .map { it -> [
+        "sub": it.baseName,
+        "anat": it / "anat" / "${it.baseName}${suffix["anat"]}",
+        "atlas": it / "anat" / "${it.baseName}${suffix["atlas"]}",
+        "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix["mask"]}",
+        "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix["mask"]}",
+        "pet": it / "pet" / "${it.baseName}${suffix["petInAnat"]}",
+    ]}
+//subjects.into { anat; atlas; pet; petAtlas; dashboard }
+
+
+/*
+ * Dashboards
+ */
+
+process dashboard {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    val sub from subjects
+
+    output:
+    file "data/*_mosaic.jpg"
+    file "dashboards/*.html"
+
+    script:
+    template "dashboard.py"
+}
+
+/*
+ * Assets
+ */
+
+process assets {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    output:
+    file "assets/*"
+
+    """
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    import os
+    from os.path import join as opj
+    os.mkdir("assets")
+    assetsFiles = [
+        opj('dashboards', 'assets', 'css', 'keen-dashboards.css'),
+        opj('dashboards', 'assets', 'js', 'keen-analytics.js'),
+        opj('brainsprite.js', 'assets', 'brainsprite.min.js'),
+        opj('brainsprite.js', 'assets', 'jquery-1.9.1', 'jquery.min.js'),
+        ]
+    for f in assetsFiles:
+        os.symlink(opj(os.environ["LOCAL_VL_DIR"], f),
+                opj("assets", os.path.basename(f)))
+    """
+}
+
+/*
+{
+    "mosaics": {
+        "t1": {
+        },
+        "t1seg": {
+            "cmap": "gray"
+        },
+        "pet": {
+        },
+        "petwm": {
+            "title": "PET and white matter segmentation",
+            "notes": "PET image in freesurfer native space with white matter contour"
+        },
+        "petseg": {
+            "title": "PET and aparc+aseg",
+            "notes": "PET image in freesurfer native space with aparc+aseg as overlay",
+            "cmap": "gray"
+        },
+        "suvr": {
+            "title": "SUVr",
+            "notes": "SUVr image in freesurfer native space with cerebellum contour"
+        }
+    }
+}
+*/

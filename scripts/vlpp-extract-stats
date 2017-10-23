@@ -22,13 +22,13 @@ def get_arguments():
 
             """)
 
-    '''
     parser.add_argument(
-            '-p', '--pet_dir',
-            required=True,
-            help='pet directory of the participant'
+            '-r', '--ref',
+            required=False, default="cerebellumCortex",
+            help='Reference ROI: [*cerebellumCortex*, wholeCerebellum, whitematter]'
             )
 
+    '''
     parser.add_argument(
             '-s', '--participant_id',
             required=True,
@@ -52,15 +52,17 @@ def get_arguments():
 
 
 def main():
+    args = get_arguments()
+    ref = args.ref
     dataDir = os.getcwd()
     #'/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
-    output = os.path.join(dataDir, 'means_rois_ref_cerebellumcortex.csv')
+    output = os.path.join(dataDir, 'ref-{}_means_rois.csv'.format(ref))
 
     subjects = []
     datas = []
-    dataFiles = glob.glob('{}/output/*/stats/fwhm_6/cerebellum_cortex/*.csv'.format(dataDir))
+    dataFiles = glob.glob('{0}/*/stats/*ref-{1}_stats.csv'.format(dataDir, ref))
     for dataFile in dataFiles:
-        subjects.append(dataFile.split("/")[-5])
+        subjects.append(dataFile.split("/")[-3])
         datas.append(pandas.read_csv(dataFile))
 
     df = pandas.concat(datas, keys=subjects)

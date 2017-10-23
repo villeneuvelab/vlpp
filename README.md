@@ -1,42 +1,5 @@
 # VLPP: Villeneuve Laboratory PET Pipeline
 
-## Basic help
-
-```
-$ vlpp -h
-usage: vlpp [-h] -p PET_DIR [-i PARTICIPANT_ID] [-f FS_DIR] [-c CONFIG_FILE]
-            [-o OUTPUT_DIR]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PET_DIR, --pet_dir PET_DIR
-                        Directory with your PET dataset for one participant.
-                        By default, the pipeline will select all the ".nii.gz"
-                        files inside the directory. To change this behaviour,
-                        change the value of ["selectfiles"]["pet"] inside your
-                        configuration file.
-  -i PARTICIPANT_ID, --participant_id PARTICIPANT_ID
-                        Participant identification. By default, it will be the
-                        PET directory name.
-  -f FS_DIR, --fs_dir FS_DIR
-                        Directory with the freesurfer pipeline of the
-                        participant. If no fs_dir is provided by the user, the
-                        script guesses that fs_dir is a directory named
-                        "freesurfer" inside pet_dir.
-  -c CONFIG_FILE, --config_file CONFIG_FILE
-                        Path to a json configuration file. The pipeline
-                        configures itself by looking into several files.
-                        First, it looks into the default file inside the
-                        installation directory
-                        (vlpp/config/config_default.json). Then, if the file
-                        exists, it looks inside the current directory in
-                        "code/config.json". Finally it looks to the file given
-                        with this option.
-  -o OUTPUT_DIR, --output_dir OUTPUT_DIR
-                        Output directory. By default, this is the current
-                        directory.
-```
-
 ## Using the pipeline on `guillimin`
 
 ### Setting up you environment
@@ -48,7 +11,6 @@ To be able to use it, you have to setup your environment correctly:
 ssh -Y <username>@guillimin.hpc.mcgill.ca
 module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
-source activate vlpp
 ```
 
 Please, follow the instructions on "How to access neuroimaging softwares" and "How to setup spm for matlab" from [here](https://github.com/villeneuvelab/documentation/wiki/Guillimin-neuroimaging-softwares)
@@ -178,6 +140,7 @@ git clone --recursive https://github.com/villeneuvelab/vlpp.git
 - [spm](http://www.fil.ion.ucl.ac.uk/spm/)
 - [fsl](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
 - [freesurfer](https://surfer.nmr.mgh.harvard.edu/)
+- [ANTs](http://stnava.github.io/ANTs/)
 
 ### Python dependencies
 
@@ -187,6 +150,7 @@ The file `environment.yml` contains the python dependencies. Installing through 
 
 ```
 conda config --add channels conda-forge
+conda config --add channels bioconda
 conda env create -f environment.yml
 ```
 
