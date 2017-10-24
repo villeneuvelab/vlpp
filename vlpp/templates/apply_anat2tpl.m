@@ -19,11 +19,11 @@ try,
         matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [-78 -112 -70
                                                                   78 76 85];
         matlabbatch{1}.spm.spatial.normalise.write.woptions.vox = [2 2 2];
-        matlabbatch{1}.spm.spatial.normalise.write.woptions.interp = 4;
+        matlabbatch{1}.spm.spatial.normalise.write.woptions.interp = {{interp}};
         matlabbatch{1}.spm.spatial.normalise.write.woptions.prefix = 'w';
-        matlabbatch{2}.spm.spatial.coreg.write.ref = {'/sf1/project/yai-974-aa/local/atlas/MNI152_T1_1mm.nii,1'};
+        matlabbatch{2}.spm.spatial.coreg.write.ref = {'{{ref}},1'};
         matlabbatch{2}.spm.spatial.coreg.write.source(1) = cfg_dep('Normalise: Write: Normalised Images (Subj 1)', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('()',{1}, '.','files'));
-        matlabbatch{2}.spm.spatial.coreg.write.roptions.interp = 4;
+        matlabbatch{2}.spm.spatial.coreg.write.roptions.interp = {{interp}};
         matlabbatch{2}.spm.spatial.coreg.write.roptions.wrap = [0 0 0];
         matlabbatch{2}.spm.spatial.coreg.write.roptions.mask = 0;
         matlabbatch{2}.spm.spatial.coreg.write.roptions.prefix = 'r';

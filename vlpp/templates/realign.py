@@ -14,18 +14,19 @@ class Realign(object):
 
     def __init__(self):
         os.mkdir("transform")
+        call("touch transform/log", shell=True)
 
         self.status = "${params.realign}"
         self.petInput = "${pet}"
         self.petImg = nibabel.load(self.petInput)
         self.petToEstimate = "${participant}_tmp-toEstimate${suffix.pet}"
         self.petToRegister = "${participant}_tmp-toRegister${suffix.pet}"
-        self.petCentiloid = "${participant}_tmp-centiloid${suffix.pet}"
+        self.petCentiloid = "${participant}_tmp-toRegister${suffix.centiloid}"
 
         self.trim4070 = "${participant}_trim4070.nii.gz"
         self.trim5070 = "${participant}_trim5070.nii.gz"
 
-        self.petRealignTmp = "transform/${participant}_tmp-realign${suffix.pet}"
+        self.petRealignTmp = "${participant}_tmp-realign${suffix.pet}"
 
     @property
     def petIs4d(self):
@@ -50,12 +51,12 @@ class Realign(object):
             call("cp tmp.nii.gz {0}".format(output), shell=True)
 
     def trimPetTo4070(self):
-        if "${params.study}" == "DIAN":
+        if "${params.dataset}" == "DIAN":
             self.trim_DIAN()
-        elif "${params.study}" == "PAD":
+        elif "${params.dataset}" == "PAD":
             os.symlink(self.petInput, self.trim4070)
         else:
-            print("${params.study}: not known, consider it is 40 to 70")
+            print("${params.dataset}: not known, consider it is 40 to 70")
             os.symlink(self.petInput, self.trim4070)
 
     def trim_DIAN(self):
@@ -89,17 +90,19 @@ class Realign(object):
                 loader=FileSystemLoader(os.path.join("${baseDir}", "templates")),
                 trim_blocks=True)
         j2_env.get_template('realign.m').stream(**tags).dump("realign.m")
-
         call("matlab -nodisplay < realign.m", shell=True)
-        call("fslmerge -t {0} rvol*".format(self.petRealignTmp), shell=True)
-        self.mean_and_smooth(self.petRealignTmp, self.petToEstimate)
-        self.mean_and_smooth(self.petRealignTmp, self.petToRegister, False)
-        cmd = "fslroi {0} {1} 2 -1".format(self.petRealignTmp, self.trim5070)
+
+        petRealignTmp = os.path.join("transform", self.petRealignTmp)
+        call("fslmerge -t {0} rvol*".format(petRealignTmp), shell=True)
+
+        self.mean_and_smooth(petRealignTmp, self.petToEstimate)
+        self.mean_and_smooth(petRealignTmp, self.petToRegister, False)
+        cmd = "fslroi {0} {1} 2 -1".format(petRealignTmp, self.trim5070)
         call(cmd, shell=True)
         self.mean_and_smooth(self.trim5070, self.petCentiloid, False)
-        #call("fslmaths {0} -nan {0}".format(self.output), shell=True)
-        #call("fslmaths {0} -Tmean {1}".format(self.petToEst), shell=True)
-        os.symlink("rp_vol0000.txt", "transform/realign_parameters.txt")
+        os.symlink(
+                "rp_vol0000.txt",
+                os.path.join("transform", "realign_parameters.txt"))
 
     def run(self):
         if self.petIs4d:
@@ -117,12 +120,11 @@ class Realign(object):
                     - trim to centiloid and Tmean de image to register
                 """
                 self.mean_and_smooth(self.trim4070, self.petToEstimate)
-                self.mean_and_smooth(self.trim4070, self.petToToRegister, False)
+                self.mean_and_smooth(self.trim4070, self.petToRegister, False)
                 cmd = "fslroi {0} {1} 2 -1".format(self.trim4070, self.trim5070)
                 call(cmd, shell=True)
                 self.mean_and_smooth(self.trim5070, self.petCentiloid, False)
             else:
-                print("GO REALIGN")
                 self.realign()
         else:
             """
@@ -134,5 +136,9 @@ class Realign(object):
             os.symlink(self.petInput, self.petCentiloid)
 
 
-realign = Realign()
-realign.run()
+def main():
+    realign = Realign()
+    realign.run()
+
+if __name__ == '__main__':
+    main()

@@ -56,6 +56,12 @@ def get_arguments():
             help='How to search for pet date: dian, *pad*',
             )
 
+    parser.add_argument(
+            '--dry',
+            required=False, action="store_true",
+            help='Write the qsub files but do not submit them',
+            )
+
     return parser.parse_args()
 
 
@@ -70,10 +76,15 @@ class Qsub(object):
 
         self.tsv = args.tsv
         self.mode = args.mode
+        self.dry = args.dry
         self.args = args
 
+        if self.tsv.endswith("tsv"):
+            delimiter = '\t'
+        else:
+            delimiter = ','
         self.df = pandas.read_csv(
-                self.tsv, delimiter='\t', comment="#", dtype=object)
+                self.tsv, delimiter=delimiter, comment="#", dtype=object)
 
         self.tags = {
                 "RAPid": args.rapid,
@@ -92,7 +103,7 @@ class Qsub(object):
             baseDir = baseDir.replace(
                     "/home/gonjil/project_yai",
                     "/sf1/project/yai-974-aa")
-            imgName = line.img-name
+            imgName = line["img-name"]
             imgName = imgName.replace(".gz", "")
             return os.path.join(baseDir, imgName)
         else:
@@ -111,7 +122,7 @@ class Qsub(object):
             return os.path.join(
                     "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
                     "derivatives", "freesurfer-v5.3.0",
-                    "sub-" + line.sub-ID + "_ses-" + line.ses)
+                    "sub-" + line["sub-ID"] + "_ses-" + line.ses)
             return
         else:
             if self.args.fs_dir:
@@ -122,9 +133,14 @@ class Qsub(object):
 
     def participant(self, line):
         if self.mode == "pad":
-            return line.participant_id
+            sub = line.participant_id
         elif self.mode == "dian":
-            return line.sub-ID + "_ses-" + line.ses
+            sub = line["sub-ID"] + "_ses-" + line.ses
+
+        if sub.startswith("sub-"):
+            return sub
+        else:
+            return "sub-" + sub
 
     def run(self):
 
@@ -142,15 +158,17 @@ class Qsub(object):
             qsubScript = os.path.join(self.codeDir, qsubName)
             self.tpl.stream(**tags).dump(qsubScript)
 
-            call("qsub {}".format(qsubScript), shell=True)
-            #time.sleep(0.2)
+            if not self.dry:
+                call("qsub {}".format(qsubScript), shell=True)
+                time.sleep(0.2)
 
 
     @property
     def tpl(self):
         APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         env = Environment(
-                loader=FileSystemLoader(os.path.join(APP_DIR, 'templates')),
+                loader=FileSystemLoader(os.path.join(
+                        APP_DIR, 'vlpp', 'templates')),
                 trim_blocks=True,
                 )
         return env.get_template("guillimin_qsub.sh")

@@ -1,152 +1,73 @@
-# VLPP: Villeneuve Laboratory PET Pipeline
+# Villeneuve Laboratory PET Pipeline (VLPP)
+
+<description>
+
+VLPP is builded with the [Nextflow framework][nextflow] which enables scalable and reproducible scientific workflows written in the most common scripting languages.
+
+## Usage
+
+`vlpp --pet <> --freesurfer <> --participant <> [-params-file <>]`
+
+###### Mandatories arguments:
+
+- `--pet`: PET file, it could be .mnc, .nii or .nii.gz
+- `--freesurfer`: Freesurfer directory of the participant
+- `--participant`: Participant code name
+
+###### Optional arguments:
+
+- `--help`: Print vlpp usage
+- `-params-file`: Load script parameters from a JSON/YAML file
+- `-resume`: Execute the script using the cached results, useful to continue executions that was stopped by an error
+- `-h` or `-help`: Print the nextflow usage
+
+###### List of possible parameters for `-params-file`
+
+Some steps are already automatics but some need parameters
+
+- `dataset`: Specific parameters for some dataset are already build in the pipeline. If this parameter is not set, default parameters will be chosen.
+  - `PAD`: for [PreventAD][pad] data
+  - `DIAN`: for [DIAN][dian] data
+- `realign`: realign frames of your participant
+  - set to `ignore` if you want to skip it. Will be automatically ignore if PET data have only one frame.
+- `smooth`: smooth the data after normalization to T1w space
+  - set to `ignore` if you want to skip it
+  - `x` mm (default: 6)
+- `mask-smooth`: keep only grey and white matter during the smoothing process
+
+Example of JSON params file:
+
+```
+{
+    "study": "PAD",
+    "realign": "ignore",
+    "maskSmooth": true
+}
+```
 
 ## Using the pipeline on `guillimin`
 
-### Setting up you environment
-
-If you have access to guillimin cluster, the pipeline is already installed.
-To be able to use it, you have to setup your environment correctly:
-
-```
-ssh -Y <username>@guillimin.hpc.mcgill.ca
-module use /sf1/project/yai-974-aa/local/modulefiles
-module load VilleneuveLab
-```
-
-Please, follow the instructions on "How to access neuroimaging softwares" and "How to setup spm for matlab" from [here](https://github.com/villeneuvelab/documentation/wiki/Guillimin-neuroimaging-softwares)
-
-### Launch with one participant localy
-
-As you can see in the help above, the pipeline needs at least two directories (the one with your PET data and the freesurfer directory.
-
-`vlpp -p <path_to_pet_data> -f <path_to_freesurfer>`
-
-If your PET data is in another format than "*.nii.gz", you can change that through a configuration file (`config.json`):
-
-```
-{
-    "selectfiles": {
-        "pet": "*.mnc"
-    }
-}
-```
-
-`vlpp -p <path_to_pet_data> -f <path_to_freesurfer> -c config.json`
-
-### Launch with one participant with `qsub`
-
-You need to create a new directory in wich you will run the qsub command, for example:
-
-```
-mkdir pet_processing
-cd pet_processing
-```
-
-Create a `code` directory to stock your qsub script (`mkdir code`)
-
-Copy the qsub script template `qsub_guillimin_helper.sh` inside the code directory. On guillimin: `cp /sf1/project/yai-974-aa/local/vlpp/git/vlpp/templates/qsub_guillimin_helper.sh code/qsub_<participant_code>.sh`
-
-Edit this script to your need. [Link to the template](https://github.com/villeneuvelab/vlpp/blob/master/vlpp/templates/qsub_guillimin_helper.sh)
-
-### Launch with several participants
-
-You need to create a new directory in wich you will run all the commands for the processing, for example:
-
-```
-mkdir pet_processing
-cd pet_processing
-```
-
-In this example, we suppose that your data have this structure:
-
-```
-/path
-  |--freesurfer
-    |--subjects
-      |--subject_00_type1
-      |--subject_01_type1
-/other_path
-  |--data
-    |--pet
-      |--subject_00_20170308
-        |--NAV_subject_00_20170308_1435.mnc
-      |--subject_01_20170315
-        |--NAV_subject_01_20170315_1126.mnc
-```
-
-#### configuration file
-
-This step is optional and is needed if you want to run the pipeline with different options than the default (see here for more informations). Inside your processing directory, create a `code` directory with a new `config.json` file. The pipeline will automatically looks into this file and update the default configuration to fit your study.
-
-```
-mkdir code
-touch code/config.json
-```
-
-The pipeline needs to know how to access your pet data. It is done with a generic string in the `pet` key inside the `selectfiles` configuration. Here is the content of `code/config.json` for the tutorial example:
-
-```
-{
-    "selectfiles": {
-        "pet": "NAV_{participant_id}_*.nii.gz"
-    }
-}
-```
-
-Since there is only one _minc_ file in the example, the value could simply be "*.mnc". The example above was to show, it is possible to use the `participant_id` inside curly braces to indicate the participant name.
-
-#### `vlpp-qsub`
-
-```
-$ vlpp-qsub -h
-usage: vlpp-qsub [-h] [-p PET_DIR] [-f FS_DIR] [-t TSV] [-r RAPID] [--qa]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PET_DIR, --pet_dir PET_DIR
-                        Base directory for all of your PET data
-  -f FS_DIR, --fs_dir FS_DIR
-                        Base directory for all of your freesurfer data
-  -t TSV, --tsv TSV     A tsv file describing your participants
-  -r RAPID, --rapid RAPID
-                        Your RAPid number on guillimin
-  --qa                  Launch the quality assessment
-```
-
-The tool `vlpp-qsub` is here to help submitting the pipeline through `qsub` on guillimin. With this kind of structure (describe above) you would have to create a `participants.tsv` file with at least 3 columns (participant_id, fs_dir, pet_dir). A tsv (tabulation-separated values) file is the same as a csv file but tabulation is used to separated data.
-
-| participant_id | fs_dir | pet_dir |
-| --- | --- | --- |
-| subject_00 | subject_00_type1 | subject_00_20170308 |
-| subject_01 | subject_01_type1 | subject_01_20170315 |
-
-Now, you can run the command:
-
-`vlpp-qsub -f /path/freesurfer/subjects -p /other_path/data/pet -t participants.tsv`
-
-#### Quality Assessment
-
-`vlpp-qsub --qa`
+Please follow this [link][guillimin-doc].
 
 ## Install
 
-```
-git clone --recursive https://github.com/villeneuvelab/vlpp.git
-```
+Clone this repository and add the `vlpp` and `scripts` to your `PATH`
 
-### Software dependencies
+###### Software dependencies
 
 - [matlab](https://www.mathworks.com/)
 - [spm](http://www.fil.ion.ucl.ac.uk/spm/)
 - [fsl](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
 - [freesurfer](https://surfer.nmr.mgh.harvard.edu/)
 - [ANTs](http://stnava.github.io/ANTs/)
+- [minctools](http://www.bic.mni.mcgill.ca/ServicesSoftware/MINC)
+- [Nextflow][nextflow]
 
 ### Python dependencies
 
-The file `environment.yml` contains the python dependencies. Installing through [conda](https://conda.io/docs/) is highly recommended.
+The files `environment.yml` and `requirements.txt` contains the python dependencies
 
-#### Create the environment `vlpp`
+If you use conda [conda](https://conda.io/docs/). Here is how to install the python environment:
 
 ```
 conda config --add channels conda-forge
@@ -154,7 +75,7 @@ conda config --add channels bioconda
 conda env create -f environment.yml
 ```
 
-#### Update the environment
-
-`conda env update -f environment.yml`
-
+[dian]: https://www.nia.nih.gov/alzheimers/clinical-trials/dominantly-inherited-alzheimer-network-dian
+[guillimin-doc]: https://github.com/villeneuvelab/documentation/wiki/VLPP-on-guillimin
+[nextflow]: https://www.nextflow.io/
+[pad]: http://www.douglas.qc.ca/page/prevent-alzheimer

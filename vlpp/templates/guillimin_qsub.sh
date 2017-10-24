@@ -11,8 +11,8 @@ module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
 
 cd ${PBS_O_WORKDIR}
-mkdir -p sub-{{participant}}
-cd sub-{{participant}}
+mkdir -p {{participant}}
+cd {{participant}}
 
 vlpp --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -params-file ../code/config.json -resume
 

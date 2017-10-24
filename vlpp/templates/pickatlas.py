@@ -29,6 +29,6 @@ if "${roiName}".endswith("Erode"):
     call(cmd, shell=True)
 
 # publish
-output = "${participant}_roi-${roiName}${suffix['mask']}"
+output = "${participant}_roi-${roiName}${suffix.mask}"
 call("ln -s mask.nii.gz {0}".format(output), shell=True)
 

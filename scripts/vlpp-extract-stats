@@ -23,30 +23,17 @@ def get_arguments():
             """)
 
     parser.add_argument(
-            '-r', '--ref',
+            '--ref',
             required=False, default="cerebellumCortex",
             help='Reference ROI: [*cerebellumCortex*, wholeCerebellum, whitematter]'
             )
 
-    '''
     parser.add_argument(
-            '-s', '--participant_id',
-            required=True,
-            help='participant ID'
+            '--type',
+            required=False, default="pet",
+            help='Data type: [*pet*, centiloid]'
             )
 
-    parser.add_argument(
-            '-f', '--fs_dir',
-            required=True,
-            help='freesurfer directory of the participant'
-            )
-
-    parser.add_argument(
-            '-c', '--config_file',
-            required=True,
-            help='Path to a json config file',
-            )
-    '''
 
     return parser.parse_args()
 
@@ -54,13 +41,14 @@ def get_arguments():
 def main():
     args = get_arguments()
     ref = args.ref
+    type = args.type
     dataDir = os.getcwd()
-    #'/sf1/project/yai-974-aa/christophe/pet-pilot-whole-cereb'
-    output = os.path.join(dataDir, 'ref-{}_means_rois.csv'.format(ref))
+    output = os.path.join(dataDir, 'ref-{}_means_rois.csv'.format(ref, type))
 
     subjects = []
     datas = []
-    dataFiles = glob.glob('{0}/*/stats/*ref-{1}_stats.csv'.format(dataDir, ref))
+    dataFiles = glob.glob('{0}/*/stats/*ref-{1}*{2}.csv'.format(
+        dataDir, ref, type))
     for dataFile in dataFiles:
         subjects.append(dataFile.split("/")[-3])
         datas.append(pandas.read_csv(dataFile))

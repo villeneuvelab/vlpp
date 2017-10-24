@@ -3,8 +3,11 @@
 vim: syntax=groovy
 -*- mode: groovy;-*-
 
-Author:
- - Christophe Bedetti <christophe.bedetti@criugm.qc.ca>
+    Villeneuve Laboratory PET Pipeline (VLPP)
+
+    For any bugs or problems found, please contact us at:
+      - christophe.bedetti@criugm.qc.ca
+      - https://github.com/villeneuvelab/vlpp/issues
 */
 
 
@@ -12,19 +15,18 @@ Author:
  * Parameters validation
  */
 
+// Help
 if ( params.containsKey('help') ) {
     println """\
     Execute the vlpp project
-    Usage: vlpp --pet <> --freesurfer <> --participant <> [--tpl <> -params-file <>]
+    Usage: vlpp --pet <> --freesurfer <> --participant <> [-params-file <>]
         Options:
         --pet
-            Pet file, it could be a .mnc, .nii or .nii.gz
+            Pet file, it could be .mnc, .nii or .nii.gz
         --freesurfer
-            Freesurfer directory of your participant
+            Freesurfer directory of the participant
         --participant
             Participant code name
-        --tpl
-            Default: MNI152_T1_1mm_brain.nii.gz
         --help
             Print vlpp usage
         Nextflow options:
@@ -40,20 +42,7 @@ if ( params.containsKey('help') ) {
     System.exit(0)
 }
 
-if( params.containsKey('tpl') ) {
-    tpl = file params.tpl
-    }
-else {
-    //tpl = file baseDir / "atlas" / "MNI152_T1_1mm.nii.gz"
-    tpl = file baseDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
-}
-
-['study', 'tracer', 'realign', 'smooth'].each {
-    if( !params.containsKey(it) ) {
-        params[it] = null
-    }
-}
-
+// Checking mandatory parameters
 ['pet', 'freesurfer', 'participant'].each {
     if( !params.containsKey(it) ) {
         println "The parameter `${it}` is not set"
@@ -63,24 +52,31 @@ else {
     }
 }
 
-pet_in = file params.pet
-freesurfer_dir = file params.freesurfer
-participant = "sub-" + params.participant
-anat_in = freesurfer_dir / "mri" / "T1.mgz"
-atlas_in = freesurfer_dir / "mri" / "aparc+aseg.mgz"
+// Setting missing params to null
+['dataset', 'realign', 'smooth', 'maskSmooth'].each {
+    if( !params.containsKey(it) ) {
+        params[it] = null
+    }
+}
+
+petInput = file params.pet
+freesurferDir = file params.freesurfer
+anatInput = freesurferDir / "mri" / "T1.mgz"
+atlasInput = freesurferDir / "mri" / "aparc+aseg.mgz"
+participant = params.participant
 suffix = params.suffix
+baseSf1 = file "/sf1"
+tpl = baseSf1 / "project" / "yai-974-aa" / "local" / "atlas" / "MNI152_T1_1mm.nii"
 
 println """\
         =============
         V L P P - N F
         -------------
-        PET file             : ${pet_in}
-        freesurfer directory : ${freesurfer_dir}
+        PET file             : ${petInput}
+        freesurfer directory : ${freesurferDir}
         participant          : ${participant}
-        =============
-        """
+        ============="""
         .stripIndent()
-        //template             : ${tpl.baseName}
 
 
 /*
@@ -92,13 +88,13 @@ process anatconvert {
     publishDir "anat", mode: 'copy', overwrite: true
 
     input:
-    file img from anat_in
+    file img from anatInput
 
     output:
     file "*" + suffix.anat into anat
 
     """
-    mri_convert --out_type nii --input_volume $img \
+    mri_convert --out_type nii --input_volume ${img} \
         --output_volume ${participant}${suffix.anat}
     """
 }
@@ -108,13 +104,13 @@ process atlasconvert {
     publishDir "anat", mode: 'copy', overwrite: true
 
     input:
-    file img from atlas_in
+    file img from atlasInput
 
     output:
     file "*" + suffix.atlas into atlas
 
     """
-    mri_convert --out_type nii --input_volume $img \
+    mri_convert --out_type nii --input_volume ${img} \
         --output_volume ${participant}${suffix.atlas}
     """
 }
@@ -122,65 +118,13 @@ process atlasconvert {
 process petconvert {
 
     input:
-    file img from pet_in
+    file img from petInput
 
     output:
     file 'petconvert.nii.gz' into petnii
 
     script:
     template "petconvert.py"
-}
-
-
-/*
- * Segmentation
- */
-
-process segmentation {
-
-    publishDir workflow.launchDir, mode: 'copy', overwrite: true
-
-    input:
-    file anat
-
-    output:
-    file "mask/s*roi-c1" + suffix.mask into spm_gm
-    file "mask/s*roi-c2" + suffix.mask into spm_wm
-    file "mask/s*roi-c3" + suffix.mask into spm_csf
-    file "mask/s*roi-c4" + suffix.mask into spm_bone
-    file "mask/s*roi-c5" + suffix.mask into spm_soft
-    //file "transform/*" + suffix["anat2tpl_aff"] into anat2tpl_aff
-    file "transform/s*" + suffix.anat2tpl into anat2tpl
-    file "transform/s*" + suffix.tpl2anat into tpl2anat
-
-    script:
-    template "segmentation.sh"
-}
-
-process brainmask {
-
-    publishDir "mask", mode: 'copy', overwrite: true
-
-    input:
-    //file atlas
-    file gm from spm_gm
-    file wm from spm_wm
-    file csf from spm_csf
-
-    output:
-    file "*roi-brain" + suffix.mask into brainmask
-    file "*roi-gmwm" + suffix.mask into gmwmmask
-
-    """
-    brain=${participant}_roi-brain${suffix.mask}
-    gmwm=${participant}_roi-gmwm${suffix.mask}
-    #fslmaths atlas -bin -dilD -dilD -dilD -fillh \$output
-    fslmaths $gm -add $wm -add $csf -fillh -bin \$brain
-
-    fslmaths $gm -thr 0.25 tmp_gm.nii.gz
-    fslmaths $wm -thr 0.25 tmp_wm.nii.gz
-    fslmaths tmp_gm.nii.gz -add tmp_wm.nii.gz -bin \$gmwm
-    """
 }
 
 
@@ -198,11 +142,60 @@ process realign {
     output:
     file "*tmp-toEstimate" + suffix.pet into petToEstimate
     file "*tmp-toRegister" + suffix.pet into petToRegister
-    file "*tmp-centiloid" + suffix.pet into petCentiloid
+    file "*tmp-toRegister" + suffix.centiloid into centiloidToRegister
     file "transform/*"
 
     script:
     template "realign.py"
+}
+
+
+/*
+ * Segmentation
+ */
+
+process segmentation {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    file anat
+
+    output:
+    file "mask/*roi-c1" + suffix.mask into gmSpm
+    file "mask/*roi-c2" + suffix.mask into wmSpm
+    file "mask/*roi-c3" + suffix.mask into csfSpm
+    file "mask/*roi-c4" + suffix.mask into boneSpm
+    file "mask/*roi-c5" + suffix.mask into softSpm
+    file "transform/*" + suffix.anat2tpl into anat2tpl
+    file "transform/*" + suffix.tpl2anat into tpl2anat
+
+    script:
+    template "segmentation.sh"
+}
+
+process brainmask {
+
+    publishDir "mask", mode: 'copy', overwrite: true
+
+    input:
+    file gm from gmSpm
+    file wm from wmSpm
+    file csf from csfSpm
+
+    output:
+    file "*roi-brain" + suffix.mask into brainMask
+    file "*roi-gmwm" + suffix.mask into gmwmMask
+
+    """
+    brain=${participant}_roi-brain${suffix.mask}
+    fslmaths $gm -add $wm -add $csf -fillh -bin \$brain
+
+    gmwm=${participant}_roi-gmwm${suffix.mask}
+    fslmaths $gm -thr 0.25 tmp_gm.nii.gz
+    fslmaths $wm -thr 0.25 tmp_wm.nii.gz
+    fslmaths tmp_gm.nii.gz -add tmp_wm.nii.gz -bin \$gmwm
+    """
 }
 
 
@@ -232,44 +225,24 @@ process estimate_pet2anat {
     template "estimate_pet2anat.sh"
 }
 
-/*
-process estimate_anat2tpl {
-
-    publishDir "transform", mode: 'copy', overwrite: true
-
-    input:
-    file tpl
-    file anat
-    file brainmask
-
-    output:
-    file "*" + suffix["anat2tpl_aff"] into anat2tpl_aff
-    file "*" + suffix["anat2tpl"] into anat2tpl
-    file "*" + suffix["tpl2anat"] into tpl2anat
-
-    script:
-    template "estimate_anat2tpl.sh"
-}
-*/
-
 process apply_transforms_pet {
 
-    publishDir "pet", mode: 'copy', overwrite: true
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
     file anat
     file tpl
-    file gmwm from gmwmmask
+    file gmwm from gmwmMask
     file pet from petToRegister
-    file centiloid from petCentiloid
+    file centiloid from centiloidToRegister
     file pet2anat
-    //file anat2tpl_aff
     file anat2tpl
 
     output:
-    file "*" + suffix.pet
-    file "*" + suffix.petInAnat into petInAnat
-    //file "*" + suffix.petInTpl into petInTpl
+    file "pet/*" + suffix.petInAnat into petInAnat
+    file "pet/*" + suffix.petInTpl
+    file "centiloid/*" + suffix.centiloidInAnat into centiloidInAnat
+    file "centiloid/*" + suffix.centiloidInTpl
 
     script:
     template "apply_transforms_pet.py"
@@ -284,17 +257,15 @@ process apply_transforms_anat {
     file anat
     file tpl
     file atlas
-    //file anat2tpl_aff
     file anat2tpl
 
     output:
-    file "*" + suffix["anatInTpl"] into anatInTpl
-    //file "*" + suffix["atlasInTpl"] into atlasInTpl
+    file "*" + suffix.anatInTpl
+    //file "*" + suffix.atlasInTpl
 
     script:
     template "apply_transforms_anat.py"
 }
-
 
 
 /*
@@ -317,8 +288,7 @@ process pickatlas {
     set roiName, index from rois
 
     output:
-    val roiName into roiNamePick, roiNamePickToTpl
-    file "*" + suffix["mask"] into refmask, refmask_tpl
+    file "*" + suffix.mask into refMaskToSuvr
 
     script:
     template "pickatlas.py"
@@ -354,37 +324,55 @@ process mask2tpl {
  * Suvr
  */
 
-process suvrcalc {
+suvrInAnatMode = "anat"
+process suvrInAnat {
 
-    publishDir "suvr", mode: 'copy', overwrite: true
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
+    val mode from suvrInAnatMode
     file pet from petInAnat
-    val roiName from roiNamePick
-    file mask from refmask
+    file centiloid from centiloidInAnat
+    file mask from refMaskToSuvr
 
     output:
-    val roiName into roiNameSuvrToDefault, roiNameSuvrToSpec
-    file "*" + suffix["suvr"] into suvrToDefault, suvrToSpec, suvrToTpl
+    file "pet/*" + suffix.petInAnat into petSuvrToTpl, petSuvrToStats
+    file "centiloid/*" + suffix.centiloidInAnat into centiloidSuvrToTpl, centiloidSuvrToStats
 
     script:
     template "suvrcalc.py"
 }
 
-process suvrcalc_tpl {
+process apply_transforms_pet_suvr {
 
-    publishDir "suvr", mode: 'copy', overwrite: true
+    publishDir "pet", mode: 'copy', overwrite: true
 
     input:
-    file suvr from suvrToTpl
-    val roiName from roiNamePickToTpl
+    file suvr from petSuvrToTpl
+    file tpl
     file anat2tpl
 
     output:
-    file "*" + suffix["suvrInTpl"]
+    file "*" + suffix.petInTpl
 
     script:
-    template "suvrcalc_tpl.py"
+    template "apply_transforms_suvr.py"
+}
+
+process apply_transforms_centiloid_suvr {
+
+    publishDir "centiloid", mode: 'copy', overwrite: true
+
+    input:
+    file suvr from centiloidSuvrToTpl
+    file tpl
+    file anat2tpl
+
+    output:
+    file "*" + suffix.centiloidInTpl
+
+    script:
+    template "apply_transforms_suvr.py"
 }
 
 
@@ -392,49 +380,33 @@ process suvrcalc_tpl {
  * Segstats
  */
 
-process stats_default {
-
-    input:
-    val roiName from roiNameSuvrToDefault
-    file suvr from suvrToDefault
-    file atlas
-
-    output:
-    set roiName, "summary.stats" into statsDefault
-
-    """
-    mri_segstats --ctab-default --excludeid 0 \
-    --i $suvr --seg $atlas --sum summary.stats
-    """
-}
-
-process stats_spec {
-
-    input:
-    val roiName from roiNameSuvrToSpec
-    file suvr from suvrToSpec
-    file atlas
-
-    output:
-    set roiName, "summary_user.stats" into statsSpec
-
-    script:
-    template "stats_spec.py"
-}
-
-
-process stats_merge {
+process stats_pet_anat {
 
     publishDir "stats", mode: 'copy', overwrite: true
 
     input:
-    set roiName, file(statsDefault), file(statsSpec) from statsDefault
-            .combine(statsSpec, by: 0)
+    file suvr from petSuvrToStats
+    file atlas
 
     output:
-    file "*_stats.csv"
+    file "*.csv"
 
     script:
-    template "stats_merge.py"
+    template "stats_suvr_anat.py"
+}
+
+process stats_centiloid_anat {
+
+    publishDir "stats", mode: 'copy', overwrite: true
+
+    input:
+    file suvr from centiloidSuvrToStats
+    file atlas
+
+    output:
+    file "*.csv"
+
+    script:
+    template "stats_suvr_anat.py"
 }
 
