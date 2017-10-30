@@ -30,8 +30,8 @@ def get_arguments():
 
     parser.add_argument(
             '--type',
-            required=False, default="pet",
-            help='Data type: [*pet*, centiloid]'
+            required=False, default="suvr",
+            help='Data type: [*suvr*, centiloid]'
             )
 
 
@@ -43,11 +43,11 @@ def main():
     ref = args.ref
     type = args.type
     dataDir = os.getcwd()
-    output = os.path.join(dataDir, 'ref-{}_means_rois.csv'.format(ref, type))
+    output = os.path.join(dataDir, 'ref-{0}_means_rois_{1}.csv'.format(ref, type))
 
     subjects = []
     datas = []
-    dataFiles = glob.glob('{0}/*/stats/*ref-{1}*{2}.csv'.format(
+    dataFiles = glob.glob('{0}/*/stats/*_ref-{1}*{2}.csv'.format(
         dataDir, ref, type))
     for dataFile in dataFiles:
         subjects.append(dataFile.split("/")[-3])
