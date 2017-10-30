@@ -1,8 +1,8 @@
 # Villeneuve Laboratory PET Pipeline (VLPP)
 
-<description>
+VLPP is an open-source software for analyzing PET images combined with freesurfer output from MRI.
 
-VLPP is builded with the [Nextflow framework][nextflow] which enables scalable and reproducible scientific workflows written in the most common scripting languages.
+VLPP is builded with the [Nextflow framework][nextflow] which enables scalable and reproducible scientific workflows.
 
 ## Usage
 
@@ -10,9 +10,9 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 
 ###### Mandatories arguments:
 
-- `--pet`: PET file, it could be .mnc, .nii or .nii.gz
+- `--pet`: PET file (mnc, nii or nii.gz)
 - `--freesurfer`: Freesurfer directory of the participant
-- `--participant`: Participant code name
+- `--participant`: Participant code
 
 ###### Optional arguments:
 
@@ -21,29 +21,45 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 - `-resume`: Execute the script using the cached results, useful to continue executions that was stopped by an error
 - `-h` or `-help`: Print the nextflow usage
 
-###### List of possible parameters for `-params-file`
+## Parameters
 
-Some steps are already automatics but some need parameters
-
-- `dataset`: Specific parameters for some dataset are already build in the pipeline. If this parameter is not set, default parameters will be chosen.
-  - `PAD`: for [PreventAD][pad] data
-  - `DIAN`: for [DIAN][dian] data
-- `realign`: realign frames of your participant
-  - set to `ignore` if you want to skip it. Will be automatically ignore if PET data have only one frame.
-- `smooth`: smooth the data after normalization to T1w space
-  - set to `ignore` if you want to skip it
-  - `x` mm (default: 6)
-- `mask-smooth`: keep only grey and white matter during the smoothing process
-
-Example of JSON params file:
+Default Parameters:
 
 ```
 {
-    "study": "PAD",
-    "realign": "ignore",
-    "maskSmooth": true
+    "realign": {
+        "ignore": false
+    },
+    "smooth": {
+        "ignore": false,
+        "fwhm": 6,
+        "maskCSF": false
+    },
+    "fsReferences": {
+        "cerebellumCortex": [8, 47],
+        "cerebellumCortexErode": [8, 47],
+        "wholeCerebellum": [7, 8, 46, 47],
+        "whitematter": [2, 41]
+    }
 }
+
 ```
+
+#### `realign`
+
+Realign frames of your participant
+  - `ignore`: set it to `true` if you want to skip this step. Will be automatically ignore if PET data has only one frame.
+
+#### `smooth`
+
+Smooth the data after normalization to T1w space
+  - `ignore`: set it to `true` if you want to skip this step.
+  - `fwhm`: gaussian kernel in mm.
+  - `maskCSF`: keep only grey and white matter during the smoothing step.
+
+### `fsReferences`
+
+Define regions of reference based on freesurfer indices of aparc+aseg atlas.
 
 ## Using the pipeline on `guillimin`
 
@@ -51,7 +67,7 @@ Please follow this [link][guillimin-doc].
 
 ## Install
 
-Clone this repository and add the `vlpp` and `scripts` to your `PATH`
+Clone this repository and add the `vlpp` and `scripts` direcetories to your `PATH`
 
 ###### Software dependencies
 
