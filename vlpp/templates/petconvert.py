@@ -15,12 +15,13 @@ def splitext_(path):
 def main():
     img = "${img}"
     _, ext = splitext_(img)
+    output = "${participant}${suffix.pet}"
 
     if ext == ".mnc":
-        call("mnc2nii -nii -short {} petconvert.nii".format(img), shell=True)
-        call("fslmaths petconvert.nii -nan petconvert.nii.gz", shell=True)
+        call("mnc2nii -nii -short {0} petconvert.nii".format(img), shell=True)
+        call("fslmaths petconvert.nii -nan {0}".format(output), shell=True)
     elif ext in [".nii", ".nii.gz"]:
-        call("fslmaths {} -nan petconvert.nii.gz".format(img), shell=True)
+        call("fslmaths {0} -nan {1}".format(img, output), shell=True)
 
 if __name__ == '__main__':
     main()

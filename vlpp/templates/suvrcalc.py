@@ -5,43 +5,73 @@
 import os
 import nibabel as nb
 import numpy as np
+from subprocess import call
 
 
-# path
-os.mkdir("pet")
-os.mkdir("centiloid")
-pet = "${pet}"
-centiloid = "${centiloid}"
-mask = "${mask}"
+class SuvrCalc(object):
 
-# inputs
-refmaskData = nb.load(mask).get_data()
-roiName = ""
-for s in mask.split("_"):
-    if s.startswith('roi'):
-        roiName = s.split("-")[1]
+    def __init__(self, input, mask, suvrOutput,
+            tracer=None, centiloidOutput=None):
+        self.input = input
+        self.mask = mask
+        self.suvr = suvrOutput
+        self.centiloid = centiloidOutput
+        self.tracer = tracer
+        self._run()
 
-if "${mode}" == "anat":
-    inputs = [
-            [pet, "pet", "${suffix.petInAnat}"],
-            [centiloid, "centiloid", "${suffix.centiloidInAnat}"]
-            ]
-else:
-    inputs = [
-            [pet, "pet", "${suffix.petInTpl}"],
-            [centiloid, "centiloid", "${suffix.centiloidInTpl}"]
-            ]
 
-for path, directory, suffix in inputs:
-    image = nb.load(path)
-    affine = image.get_affine()
-    data = image.get_data()
+    def _run(self):
+        maskData = nb.load(self.mask).get_data()
 
-    # compute
-    refData = np.ma.masked_where(refmaskData==0, data, True)
-    suvrData = data / refData.mean()
+        image = nb.load(self.input)
+        affine = image.get_affine()
+        data = image.get_data()
 
-    # save
-    output = "{0}/${participant}_ref-{1}_suvr{2}".format(
-            directory, roiName, suffix)
-    nb.save(nb.Nifti1Image(suvrData, affine), output)
+        # compute
+        refData = np.ma.masked_where(maskData==0, data, True)
+        suvrData = data / refData.mean()
+        nb.save(nb.Nifti1Image(suvrData, affine), self.suvr)
+
+        # centiloid
+        if self.centiloid:
+            if self.tracer == "PIB":
+                centiloidData = ((suvrData - 1.009) * 100) / 1.067
+                nb.save(nb.Nifti1Image(centiloidData, affine), self.centiloid)
+            elif self.tracer == "NAV":
+                centiloidData = ((suvrData - 1.028) * 100) / 1.174
+                nb.save(nb.Nifti1Image(centiloidData, affine), self.centiloid)
+
+
+def _roiName(mask):
+    roiName = ""
+    for _ in mask.split("_"):
+        if _.startswith('roi'):
+            roiName = _.split("-")[1]
+    return roiName
+
+
+def main():
+    os.mkdir("pet")
+    os.mkdir("centiloid")
+    pet = "${pet}"
+    centiloid = "${centiloid}"
+    mask = "${mask}"
+    roiName = _roiName(mask)
+    tracer = "${tracer}"
+
+    #PET
+    suvrPet = os.path.join("pet", "${pet}".replace(
+            "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
+    SuvrCalc(pet, mask, suvrPet)
+
+    #Centiloid
+    suvr5070 = os.path.join("centiloid", "${centiloid}".replace(
+            "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
+    centiloidOutput = os.path.join("centiloid", "${centiloid}".replace(
+            "${suffix.pet}", "_ref-{0}${suffix.centiloid}".format(roiName)))
+    SuvrCalc(centiloid, mask, suvr5070, tracer, centiloidOutput)
+
+
+if __name__ == '__main__':
+    main()
+

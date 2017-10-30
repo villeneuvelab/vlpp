@@ -16,17 +16,21 @@ class Realign(object):
         os.mkdir("transform")
         call("touch transform/log", shell=True)
 
-        self.status = "${params.realign}"
+        self.ignore = "${realign.ignore}"
         self.petInput = "${pet}"
         self.petImg = nibabel.load(self.petInput)
-        self.petToEstimate = "${participant}_tmp-toEstimate${suffix.pet}"
-        self.petToRegister = "${participant}_tmp-toRegister${suffix.pet}"
-        self.petCentiloid = "${participant}_tmp-toRegister${suffix.centiloid}"
+        self.petToEstimate = "${pet}".replace(
+                "${suffix.pet}", "_tmp-estimate${suffix.petTmp}")
+        self.petToRegister = "${pet}".replace(
+                "${suffix.pet}", "_time-4070${suffix.pet}")
+        self.petCentiloid = "${pet}".replace(
+                "${suffix.pet}", "_time-5070${suffix.pet}")
 
         self.trim4070 = "${participant}_trim4070.nii.gz"
         self.trim5070 = "${participant}_trim5070.nii.gz"
 
-        self.petRealignTmp = "${participant}_tmp-realign${suffix.pet}"
+        self.petRealignTmp = "${pet}".replace(
+                "${suffix.pet}", "_tmp-realign${suffix.petTmp}")
 
     @property
     def petIs4d(self):
@@ -51,12 +55,12 @@ class Realign(object):
             call("cp tmp.nii.gz {0}".format(output), shell=True)
 
     def trimPetTo4070(self):
-        if "${params.dataset}" == "DIAN":
+        if "${dataset}" == "DIAN":
             self.trim_DIAN()
-        elif "${params.dataset}" == "PAD":
+        elif "${dataset}" == "PAD":
             os.symlink(self.petInput, self.trim4070)
         else:
-            print("${params.dataset}: not known, consider it is 40 to 70")
+            print("WARNING: '${dataset}' unknown, we consider frames are 40min to 70min")
             os.symlink(self.petInput, self.trim4070)
 
     def trim_DIAN(self):
@@ -112,7 +116,7 @@ class Realign(object):
               - realign the data
             """
             self.trimPetTo4070()
-            if self.status == "ignore":
+            if self.ignore == "true":
                 """
                 If the user ignore the realign:
                     - Tmean and smooth the image to estimate coregistration

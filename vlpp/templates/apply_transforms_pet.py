@@ -11,20 +11,24 @@ j2_env = Environment(
         loader=FileSystemLoader(os.path.join("${baseDir}", "templates")),
         trim_blocks=True)
 
-def applyPet2Anat(input, output, ref, mat, mask=None):
+def applyPet2Anat(input, output, ref, mat, mask):
     cmd = "WarpImageMultiTransform 3 {0} tmp.nii.gz {1} -R {2} --use-BSpline"
     call(cmd.format(input, mat, ref), shell=True)
 
-    if "${params.maskSmooth}" == "true":
+    if "${smooth.maskCSF}" == "true":
         cmd = "fslmaths tmp.nii.gz -mul {0} tmp.nii.gz"
         call(cmd.format(mask), shell=True)
 
-    if "${params.smooth}" == "ignore":
+    if "${smooth.ignore}" == "true":
         cmd = "fslmaths tmp.nii.gz -fmean {0}"
         call(cmd.format(output), shell=True)
     else:
-        cmd = "fslmaths tmp.nii.gz -kernel gauss 2.548 -fmean {0}"
-        call(cmd.format(output), shell=True)
+        try:
+            fwhm = ${smooth.fwhm} / 2.3548
+        except:
+            fwhm = 6 / 2.3548
+        cmd = "fslmaths tmp.nii.gz -kernel gauss {0} -fmean {1}"
+        call(cmd.format(fwhm, output), shell=True)
 
 
 def applyAnat2Tpl(input, output, ref, warp, tag, interp=4):
@@ -64,16 +68,20 @@ def main():
     pet2anat = "${pet2anat}"
     anat2tpl = "${anat2tpl}"
 
-    petInAnat = "pet/${participant}${suffix.petInAnat}"
+    petInAnat = os.path.join("pet",
+            "${pet}".replace("${suffix.pet}", "_space-anat${suffix.pet}"))
     applyPet2Anat(pet, petInAnat, anat, pet2anat, gwmw)
 
-    centiloidInAnat = "centiloid/${participant}${suffix.centiloidInAnat}"
+    centiloidInAnat = os.path.join("centiloid",
+            "${centiloid}".replace("${suffix.pet}", "_space-anat${suffix.pet}"))
     applyPet2Anat(centiloid, centiloidInAnat, anat, pet2anat, gwmw)
 
-    petInTpl = "pet/${participant}${suffix.petInTpl}"
+    petInTpl = os.path.join("pet",
+            "${pet}".replace("${suffix.pet}", "_space-tpl${suffix.pet}"))
     applyAnat2Tpl(petInAnat, petInTpl, tpl, anat2tpl, "pet")
 
-    centiloidInTpl = "centiloid/${participant}${suffix.centiloidInTpl}"
+    centiloidInTpl = os.path.join("centiloid",
+            "${centiloid}".replace("${suffix.pet}", "_space-tpl${suffix.pet}"))
     applyAnat2Tpl(centiloidInAnat, centiloidInTpl, tpl, anat2tpl, "centiloid")
 
 

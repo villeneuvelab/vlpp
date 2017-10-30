@@ -37,10 +37,11 @@ def main():
 
     anat2tpl = "${anat2tpl}"
 
-    anatInTpl = "${participant}${suffix.anatInTpl}"
+    anatInTpl = "${anat}".replace("${suffix.anat}", "_space-tpl${suffix.anat}")
     applyAnat2Tpl(anat, anatInTpl, tpl, anat2tpl, "anat")
 
-    atlasInTpl = "${participant}${suffix.atlasInTpl}"
+    atlasInTpl = "${atlas}".replace(
+            "${suffix.atlas}", "_space-tpl${suffix.atlas}")
     #applyAnat2Tpl(atlas, atlasInTpl, tpl, anat2tpl, "atlas", 0)
 
 

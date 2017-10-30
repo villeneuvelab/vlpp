@@ -18,7 +18,7 @@ try,
         matlabbatch{1}.spm.spatial.normalise.write.subj.resample = {'{{img}},1'};
         matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [-78 -112 -70
                                                                   78 76 85];
-        matlabbatch{1}.spm.spatial.normalise.write.woptions.vox = [2 2 2];
+        matlabbatch{1}.spm.spatial.normalise.write.woptions.vox = [1 1 1];
         matlabbatch{1}.spm.spatial.normalise.write.woptions.interp = {{interp}};
         matlabbatch{1}.spm.spatial.normalise.write.woptions.prefix = 'w';
         matlabbatch{2}.spm.spatial.coreg.write.ref = {'{{ref}},1'};

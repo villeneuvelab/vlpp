@@ -12,7 +12,7 @@ atlas = nb.load("${atlas}")
 atlasData = atlas.get_data()
 maskData = np.empty_like(atlasData)
 
-# Compute mask for ${roiName}
+# Compute mask for ${refName}
 for val in ${index}:
     maskData[atlasData == val] = 1
 
@@ -24,11 +24,11 @@ nb.Nifti1Image(
         ).to_filename("mask.nii.gz")
 
 # erode
-if "${roiName}".endswith("Erode"):
+if "${refName}".endswith("Erode"):
     cmd = "fslmaths mask.nii.gz -ero mask.nii.gz"
     call(cmd, shell=True)
 
 # publish
-output = "${participant}_roi-${roiName}${suffix.mask}"
+output = "${participant}_roi-${refName}${suffix.mask}"
 call("ln -s mask.nii.gz {0}".format(output), shell=True)
 

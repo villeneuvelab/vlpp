@@ -52,21 +52,73 @@ if ( params.containsKey('help') ) {
     }
 }
 
-// Setting missing params to null
-['dataset', 'realign', 'smooth', 'maskSmooth'].each {
-    if( !params.containsKey(it) ) {
-        params[it] = null
-    }
+// Checking and setting params
+
+//dataset
+if( params.containsKey('dataset') ) { dataset = params.dataset }
+else { dataset = null }
+
+//tracer
+if( params.containsKey('tracer') ) { tracer = params.tracer }
+else {
+    if( params.dataset == "DIAN" ) { tracer = "PIB" }
+    else if( params.dataset == "PAD" ) { tracer = params.participant[-3..-1] }
+    else { tracer = "unknown" }
 }
 
+//realign
+realignDefault = ['ignore':false]
+if( params.containsKey('realign') ) {
+    realign = [:]
+    realignDefault.each {
+        realign[it.key] = params.realign.get(it.key, it.value)
+    }
+}
+else{ realign = realignDefault }
+
+//smooth
+smoothDefault = [
+    'ignore':false,
+    'fwhm':6,
+    'maskCSF':false,
+    ]
+if( params.containsKey('smooth') ) {
+    smooth = [:]
+    smoothDefault.each {
+        smooth[it.key] = params.smooth.get(it.key, it.value)
+    }
+}
+else{ smooth = smoothDefault }
+
+//freesurfer references
+fsRefDefault = [
+    "cerebellumCortex": [8, 47],
+    "cerebellumCortexErode": [8, 47],
+    "wholeCerebellum": [7, 8, 46, 47],
+    "whitematter": [2, 41],
+    ]
+fsRefMap = fsRefDefault
+if( params.containsKey('fsReferences') ) {
+    params.fsReferences.each { fsRefMap[it.key] = it.value }
+}
+
+
+// Channels and pipeline values
+baseSf1 = file "/sf1"
+tpl = baseSf1 / "project" / "yai-974-aa" / "local" / "atlas" / "MNI152_T1_1mm.nii"
+
+participant = params.participant
+suffix = params.suffix
+
 petInput = file params.pet
+
 freesurferDir = file params.freesurfer
 anatInput = freesurferDir / "mri" / "T1.mgz"
 atlasInput = freesurferDir / "mri" / "aparc+aseg.mgz"
-participant = params.participant
-suffix = params.suffix
-baseSf1 = file "/sf1"
-tpl = baseSf1 / "project" / "yai-974-aa" / "local" / "atlas" / "MNI152_T1_1mm.nii"
+
+fsRefList = []
+fsRefMap.each() { k, v -> fsRefList << [k,v] }
+fsRefs = Channel.from(fsRefList)
 
 println """\
         =============
@@ -75,6 +127,8 @@ println """\
         PET file             : ${petInput}
         freesurfer directory : ${freesurferDir}
         participant          : ${participant}
+        dataset              : ${dataset}
+        tracer               : ${tracer}
         ============="""
         .stripIndent()
 
@@ -121,7 +175,7 @@ process petconvert {
     file img from petInput
 
     output:
-    file 'petconvert.nii.gz' into petnii
+    file "*" + suffix.pet into petnii
 
     script:
     template "petconvert.py"
@@ -140,9 +194,9 @@ process realign {
     file pet from petnii
 
     output:
-    file "*tmp-toEstimate" + suffix.pet into petToEstimate
-    file "*tmp-toRegister" + suffix.pet into petToRegister
-    file "*tmp-toRegister" + suffix.centiloid into centiloidToRegister
+    file "*tmp-estimate*" into petToEstimate
+    file "*time-4070*" + suffix.pet into petToRegister
+    file "*time-5070*" + suffix.pet into centiloidToRegister
     file "transform/*"
 
     script:
@@ -216,6 +270,7 @@ process estimate_pet2anat {
 
     input:
     file anat
+    file brainMask
     file pet from petToEstimate
 
     output:
@@ -239,15 +294,14 @@ process apply_transforms_pet {
     file anat2tpl
 
     output:
-    file "pet/*" + suffix.petInAnat into petInAnat
-    file "pet/*" + suffix.petInTpl
-    file "centiloid/*" + suffix.centiloidInAnat into centiloidInAnat
-    file "centiloid/*" + suffix.centiloidInTpl
+    file "pet/*space-anat*" into petInAnat
+    file "pet/*space-tpl*"
+    file "centiloid/*space-anat*" into centiloidInAnat
+    file "centiloid/*space-tpl*"
 
     script:
     template "apply_transforms_pet.py"
 }
-
 
 process apply_transforms_anat {
 
@@ -260,7 +314,7 @@ process apply_transforms_anat {
     file anat2tpl
 
     output:
-    file "*" + suffix.anatInTpl
+    file "*space-tpl*"
     //file "*" + suffix.atlasInTpl
 
     script:
@@ -272,20 +326,13 @@ process apply_transforms_anat {
  *  Pickatlas
  */
 
-rois = Channel.from(
-    [ "cerebellumCortex", [8, 47] ],
-    [ "cerebellumCortexErode", [8, 47] ],
-    [ "wholeCerebellum", [7, 8, 46, 47] ],
-    [ "whitematter", [2, 41] ],
-    )
-
 process pickatlas {
 
     publishDir "mask", mode: 'copy', overwrite: true
 
     input:
     file atlas
-    set roiName, index from rois
+    set refName, index from fsRefs
 
     output:
     file "*" + suffix.mask into refMaskToSuvr
@@ -324,20 +371,20 @@ process mask2tpl {
  * Suvr
  */
 
-suvrInAnatMode = "anat"
 process suvrInAnat {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
-    val mode from suvrInAnatMode
     file pet from petInAnat
     file centiloid from centiloidInAnat
     file mask from refMaskToSuvr
+    file gmwm from gmwmMask
 
     output:
-    file "pet/*" + suffix.petInAnat into petSuvrToTpl, petSuvrToStats
-    file "centiloid/*" + suffix.centiloidInAnat into centiloidSuvrToTpl, centiloidSuvrToStats
+    file "pet/*" + suffix.suvr into petSuvrToTpl, petSuvrToStats
+    file "centiloid/*" + suffix.suvr
+    file "centiloid/*" + suffix.centiloid into centiloidSuvrToTpl, centiloidSuvrToStats
 
     script:
     template "suvrcalc.py"
@@ -353,7 +400,7 @@ process apply_transforms_pet_suvr {
     file anat2tpl
 
     output:
-    file "*" + suffix.petInTpl
+    file "*space-tpl*" + suffix.suvr
 
     script:
     template "apply_transforms_suvr.py"
@@ -369,7 +416,7 @@ process apply_transforms_centiloid_suvr {
     file anat2tpl
 
     output:
-    file "*" + suffix.centiloidInTpl
+    file "*space-tpl*" + suffix.centiloid
 
     script:
     template "apply_transforms_suvr.py"
