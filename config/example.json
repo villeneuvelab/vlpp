@@ -1,0 +1,9 @@
+{
+    "dataset": "PAD",
+    "realign": {
+        "ignore": true
+    },
+    "smooth": {
+        "maskCSF": true
+    }
+}
