@@ -32,22 +32,22 @@ USER_LABELS = {
         }
 
 
-class SuvrStats(object):
+class ImgStats(object):
 
     def __init__(self):
-        self.suvr = "${suvr}"
+        self.img = "${img}"
         self.atlas = "${atlas}"
 
         self.outputDefault = "default.stats"
         self.outputSpecial = "special.stats"
-        self.output = self.suvr.replace(".nii.gz", ".csv")
+        self.output = self.img.replace(".nii.gz", ".csv")
 
     def computeDefault(self):
         cmd = "mri_segstats --ctab-default --excludeid 0 --i {0} --seg {1} --sum {2}"
-        call(cmd.format(self.suvr, self.atlas, self.outputDefault), shell=True)
+        call(cmd.format(self.img, self.atlas, self.outputDefault), shell=True)
 
     def computeSpecial(self):
-        volData = nb.load(self.suvr).get_data()
+        volData = nb.load(self.img).get_data()
         atlasData = nb.load(self.atlas).get_data()
 
         stats = [['StructName', 'mean', 'std', 'min', 'max', 'range']]
@@ -60,11 +60,11 @@ class SuvrStats(object):
 
             stats.append([
                 structName,
-                float(data.mean()),
-                float(data.std()),
-                float(data.min()),
-                float(data.max()),
-                float(data.max()-data.min()),
+                float("{0:.4f}".format(data.mean())),
+                float("{0:.4f}".format(data.std())),
+                float("{0:.4f}".format(data.min())),
+                float("{0:.4f}".format(data.max())),
+                float("{0:.4f}".format(data.max()-data.min())),
                 ])
 
         with open(self.outputSpecial, 'wt') as csvfile:
@@ -86,7 +86,7 @@ class SuvrStats(object):
 
 
 def main():
-    app = SuvrStats()
+    app = ImgStats()
     app.run()
 
 if __name__ == '__main__':
