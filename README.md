@@ -57,7 +57,7 @@ Smooth the data after normalization to T1w space
   - `fwhm`: gaussian kernel in mm.
   - `maskCSF`: keep only grey and white matter during the smoothing step.
 
-### `fsReferences`
+#### `fsReferences`
 
 Define regions of reference based on freesurfer indices of aparc+aseg atlas.
 
