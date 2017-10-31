@@ -31,34 +31,29 @@ def applyAnat2Tpl(input, output, ref, warp, tag, interp=4):
     os.remove("wimgToTpl.nii")
 
 
-class SuvrCalc(object):
+class CentiloidCalc(object):
 
-    def __init__(self, input, mask, suvrOutput):
+    def __init__(self, input, output):
         self.input = input
-        self.mask = mask
-        self.suvr = suvrOutput
+        self.output = output
+        self.tracer = "${tracer}"
         self._run()
 
 
     def _run(self):
-        maskData = nb.load(self.mask).get_data()
-
         image = nb.load(self.input)
         affine = image.get_affine()
         data = image.get_data()
 
         # compute
-        refData = np.ma.masked_where(maskData==0, data, True)
-        suvrData = data / refData.mean()
-        nb.save(nb.Nifti1Image(suvrData, affine), self.suvr)
+        maskedData = np.ma.masked_where(data==0, data, True)
 
+        if self.tracer == "PIB":
+            centiloidData = ((maskedData - 1.009) * 100) / 1.067
+        elif self.tracer == "NAV":
+            centiloidData = ((maskedData - 1.028) * 100) / 1.174
 
-def _roiName(mask):
-    roiName = ""
-    for _ in mask.split("_"):
-        if _.startswith('roi'):
-            roiName = _.split("-")[1]
-    return roiName
+        nb.save(nb.Nifti1Image(centiloidData, affine), self.output)
 
 
 def main():
@@ -66,28 +61,27 @@ def main():
     os.mkdir("centiloid")
     pet = "${pet}"
     centiloid = "${centiloid}"
-    mask = "${mask}"
-    roiName = _roiName(mask)
     tpl = "${tpl}"
     anat2tpl = "${anat2tpl}"
 
     #PET
-    suvrPet = os.path.join("pet", "${pet}".replace(
-            "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
-    SuvrCalc(pet, mask, suvrPet)
+    outputPet = os.path.join("pet", "${pet}".replace(
+            "${suffix.suvr}", "${suffix.centiloid}"))
+    CentiloidCalc(pet, outputPet)
 
-    suvrPetInTpl = suvrPet.replace("space-anat", "space-tpl")
-    applyAnat2Tpl(suvrPet, suvrPetInTpl, tpl, anat2tpl, "pet")
+    outputPetInTpl = outputPet.replace("space-anat", "space-tpl")
+    applyAnat2Tpl(outputPet, outputPetInTpl, tpl, anat2tpl, "pet")
 
     #Centiloid
-    suvr5070 = os.path.join("centiloid", "${centiloid}".replace(
-            "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
-    SuvrCalc(centiloid, mask, suvr5070)
+    outputCentiloid = os.path.join("centiloid", "${centiloid}".replace(
+            "${suffix.suvr}", "${suffix.centiloid}"))
+    CentiloidCalc(centiloid, outputCentiloid)
 
-    suvr5070inTpl = suvr5070.replace("space-anat", "space-tpl")
-    applyAnat2Tpl(suvr5070, suvr5070inTpl, tpl, anat2tpl, "5070")
+    outputCentiloidInTpl = outputCentiloid.replace("space-anat", "space-tpl")
+    applyAnat2Tpl(outputCentiloid, outputCentiloidInTpl, tpl, anat2tpl, "centiloid")
 
 
 if __name__ == '__main__':
     main()
+
 

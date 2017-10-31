@@ -42,7 +42,7 @@ def main():
 
     atlasInTpl = "${atlas}".replace(
             "${suffix.atlas}", "_space-tpl${suffix.atlas}")
-    #applyAnat2Tpl(atlas, atlasInTpl, tpl, anat2tpl, "atlas", 0)
+    applyAnat2Tpl(atlas, atlasInTpl, tpl, anat2tpl, "atlas", 0)
 
 
 if __name__ == '__main__':

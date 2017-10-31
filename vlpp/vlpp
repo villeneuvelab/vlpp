@@ -196,7 +196,7 @@ process realign {
     output:
     file "*tmp-estimate*" into petToEstimate
     file "*time-4070*" + suffix.pet into petToRegister
-    file "*time-5070*" + suffix.pet into centiloidToRegister
+    file "*time-5070*" + suffix.pet into pet5070ToRegister
     file "transform/*"
 
     script:
@@ -270,7 +270,7 @@ process estimate_pet2anat {
 
     input:
     file anat
-    file brainMask
+    //file brainMask
     file pet from petToEstimate
 
     output:
@@ -289,14 +289,14 @@ process apply_transforms_pet {
     file tpl
     file gmwm from gmwmMask
     file pet from petToRegister
-    file centiloid from centiloidToRegister
+    file centiloid from pet5070ToRegister
     file pet2anat
     file anat2tpl
 
     output:
     file "pet/*space-anat*" into petInAnat
     file "pet/*space-tpl*"
-    file "centiloid/*space-anat*" into centiloidInAnat
+    file "centiloid/*space-anat*" into pet5070InAnat
     file "centiloid/*space-tpl*"
 
     script:
@@ -368,58 +368,49 @@ process mask2tpl {
 
 
 /*
- * Suvr
+ * Suvr & Centiloid
  */
 
-process suvrInAnat {
+process suvr_calc_in_anat {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
     file pet from petInAnat
-    file centiloid from centiloidInAnat
+    file centiloid from pet5070InAnat
     file mask from refMaskToSuvr
-    file gmwm from gmwmMask
+    file tpl
+    file anat2tpl
 
     output:
-    file "pet/*" + suffix.suvr into petSuvrToTpl, petSuvrToStats
-    file "centiloid/*" + suffix.suvr
-    file "centiloid/*" + suffix.centiloid into centiloidSuvrToTpl, centiloidSuvrToStats
+    file "pet/*space-anat*" + suffix.suvr into petSuvrToCent, petSuvrToStats
+    file "centiloid/*space-anat*" + suffix.suvr into pet5070SuvrToCent, pet5070SuvrToStats
+    file "*/*space-tpl*"
 
     script:
     template "suvrcalc.py"
 }
 
-process apply_transforms_pet_suvr {
+process centiloid_calc_in_anat {
 
-    publishDir "pet", mode: 'copy', overwrite: true
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
-    file suvr from petSuvrToTpl
+    file pet from petSuvrToCent
+    file centiloid from pet5070SuvrToCent
     file tpl
     file anat2tpl
 
     output:
-    file "*space-tpl*" + suffix.suvr
+    file "pet/*space-anat*" + suffix.centiloid into petCentToStats
+    file "centiloid/*space-anat*" + suffix.centiloid into pet5070CentToStats
+    file "*/*space-tpl*"
+
+    when:
+    tracer.matches("PIB|NAV")
 
     script:
-    template "apply_transforms_suvr.py"
-}
-
-process apply_transforms_centiloid_suvr {
-
-    publishDir "centiloid", mode: 'copy', overwrite: true
-
-    input:
-    file suvr from centiloidSuvrToTpl
-    file tpl
-    file anat2tpl
-
-    output:
-    file "*space-tpl*" + suffix.centiloid
-
-    script:
-    template "apply_transforms_suvr.py"
+    template "centiloidcalc.py"
 }
 
 
@@ -432,14 +423,14 @@ process stats_pet_anat {
     publishDir "stats", mode: 'copy', overwrite: true
 
     input:
-    file suvr from petSuvrToStats
+    file img from petSuvrToStats
     file atlas
 
     output:
     file "*.csv"
 
     script:
-    template "stats_suvr_anat.py"
+    template "stats_anat.py"
 }
 
 process stats_centiloid_anat {
@@ -447,13 +438,13 @@ process stats_centiloid_anat {
     publishDir "stats", mode: 'copy', overwrite: true
 
     input:
-    file suvr from centiloidSuvrToStats
+    file img from pet5070CentToStats
     file atlas
 
     output:
     file "*.csv"
 
     script:
-    template "stats_suvr_anat.py"
+    template "stats_anat.py"
 }
 
