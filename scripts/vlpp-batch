@@ -9,6 +9,7 @@ import pandas
 import sys
 import time
 
+from builtins import input
 from jinja2 import Environment, FileSystemLoader
 from subprocess import call
 
@@ -21,9 +22,7 @@ def get_arguments():
             Documentation at https://github.com/villeneuvelab/vlpp
             Please report any issues there
             """,
-            #epilog="""
-            #"Pas de problème, où est le manuel ?"
-            #""",
+            #epilog="""""",
             )
 
     parser.add_argument(
@@ -51,15 +50,27 @@ def get_arguments():
             )
 
     parser.add_argument(
-            '-m', '--mode',
-            required=False, default="pad",
-            help='How to search for pet date: dian, *pad*',
+            '-w', '--walltime',
+            required=False, default="1:00:00",
+            help='Set walltime',
             )
 
     parser.add_argument(
-            '--dry',
+            '--pet_pattern',
+            required=False, default="*[nii.gz|gz|mnc]",
+            help='Set pattern to match pet file',
+            )
+
+    parser.add_argument(
+            '-m', '--mode',
+            required=False,
+            help='How to search for pet data: dian, pad',
+            )
+
+    parser.add_argument(
+            '--submit',
             required=False, action="store_true",
-            help='Write the qsub files but do not submit them',
+            help='Submit the qsub scripts',
             )
 
     return parser.parse_args()
@@ -69,6 +80,8 @@ class Qsub(object):
 
     def __init__(self, args):
         self.wd = os.getcwd()
+
+        #Usefull directories
         self.codeDir = os.path.join(self.wd, "code")
         self.logDir = os.path.join(self.wd, "log")
         if not os.path.exists(self.codeDir): os.makedirs(self.codeDir)
@@ -76,9 +89,9 @@ class Qsub(object):
 
         self.tsv = args.tsv
         self.mode = args.mode
-        self.dry = args.dry
         self.args = args
 
+        #Load tsv into a DataFrame
         if self.tsv.endswith("tsv"):
             delimiter = '\t'
         else:
@@ -89,29 +102,34 @@ class Qsub(object):
         self.tags = {
                 "RAPid": args.rapid,
                 "logDir": self.logDir,
-                "walltime": "1:00:00",
+                "walltime": args.walltime,
                 }
 
     def petFile(self, line):
         if self.mode == "pad":
-            return glob.glob(os.path.join(
+            petDir = os.path.join(
                     "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
-                    "pet", "sourcedata", line.pet_dir, "*_4D_*1.mnc"))[0]
+                    "pet", "sourcedata", line.pet_dir)
+            pattern = "*_4D_*1.mnc"
         elif self.mode == "dian":
-            ses = line.ses
+            #ses = line.session_id
             baseDir = line.PIB_pwd
-            baseDir = baseDir.replace(
+            petDir = baseDir.replace(
                     "/home/gonjil/project_yai",
                     "/sf1/project/yai-974-aa")
             imgName = line["img-name"]
-            imgName = imgName.replace(".gz", "")
-            return os.path.join(baseDir, imgName)
+            pattern = imgName.replace(".gz", "")
         else:
             if self.args.pet_dir:
-                return os.path.abspath(self.args.pet_dir)
+                petDir = os.path.join(
+                        os.path.abspath(self.args.pet_dir), line.pet_dir)
             else:
-                print("`{0}` mode is not implemented, please use `-p` option`")
+                print("No base PET directory found, please use `-p` option`")
                 print("See --help for more informations")
+                sys.exit()
+            pattern = self.args.pet_pattern
+
+        return glob.glob(os.path.join(petDir, pattern))[0]
 
     def fsDir(self, line):
         if self.mode == "pad":
@@ -122,29 +140,41 @@ class Qsub(object):
             return os.path.join(
                     "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
                     "derivatives", "freesurfer-v5.3.0",
-                    "sub-" + line["sub-ID"] + "_ses-" + line.ses)
-            return
+                    "sub-" + line.participant_id + "_ses-" + line.session_id)
         else:
             if self.args.fs_dir:
-                return os.path.abspath(self.args.fs_dir)
+                return os.path.join(
+                        os.path.abspath(self.args.fs_dir), line.fs_dir)
             else:
-                print("`{0}` mode is not implemented, please use `-f` option`")
+                print("No base freesurfer directory found, please use `-f` option`")
                 print("See --help for more informations")
+                sys.exit()
 
     def participant(self, line):
-        if self.mode == "pad":
+        try:
             sub = line.participant_id
-        elif self.mode == "dian":
-            sub = line["sub-ID"] + "_ses-" + line.ses
+            if not sub.startswith("sub-"):
+                sub = "sub-" + sub
+        except:
+            print("'participant_id' column not found in {}".format(self.tsv))
+            sys.exit()
 
-        if sub.startswith("sub-"):
-            return sub
-        else:
-            return "sub-" + sub
+        try:
+            ses = line.session_id
+            if not ses.startswith("ses-"):
+                ses = "ses-" + ses
+            sub += "_" + ses
+        except:
+            ses = ""
+
+        return sub
+
 
     def run(self):
 
         args = []
+        askAgain = True
+        clobber = False
         for index, line in self.df.iterrows():
             participant_id = self.participant(line)
             tags = {
@@ -156,9 +186,38 @@ class Qsub(object):
 
             qsubName = "vlpp_{}.sh".format(participant_id)
             qsubScript = os.path.join(self.codeDir, qsubName)
-            self.tpl.stream(**tags).dump(qsubScript)
 
-            if not self.dry:
+            if os.path.exists(qsubScript):
+                if askAgain:
+                    print("{} already exists".format(qsubScript))
+                    print("Shall we overwrite it ?")
+                    print("y: yes")
+                    print("Y: yes for all")
+                    print("n: no")
+                    print("N: no for all")
+                    proceed = False
+                    answer = None
+                    while not proceed:
+                        answer = input("(y/Y/n/N) ")
+                        if answer in ["y", "Y", "n", "N"]:
+                            proceed = True
+                            if answer == "y":
+                                clobber = True
+                            elif answer == "n":
+                                clobber = False
+                            elif answer == "Y":
+                                clobber = True
+                                askAgain = False
+                            elif answer == "N":
+                                clobber = False
+                                askAgain = False
+            else:
+                self.tpl.stream(**tags).dump(qsubScript)
+
+            if clobber:
+                self.tpl.stream(**tags).dump(qsubScript)
+
+            if self.args.submit:
                 call("qsub {}".format(qsubScript), shell=True)
                 time.sleep(0.2)
 
