@@ -33,7 +33,7 @@ Default Parameters:
     "smooth": {
         "ignore": false,
         "fwhm": 6,
-        "maskCSF": false
+        "mask": "default"
     },
     "fsReferences": {
         "cerebellumCortex": [8, 47],
@@ -55,7 +55,9 @@ Realign frames of the participant
 Smooth the data after normalization to T1w space
   - `ignore`: set it to `true` if you want to skip this step.
   - `fwhm`: gaussian kernel in mm.
-  - `maskCSF`: keep only grey and white matter during the smoothing step.
+  - `mask`:
+    - default: by default, PET data is masked with a brain mask.
+    - CSF: keep only grey and white matter during the smoothing step.
 
 #### `fsReferences`
 

@@ -80,7 +80,7 @@ else{ realign = realignDefault }
 smoothDefault = [
     'ignore':false,
     'fwhm':6,
-    'maskCSF':false,
+    'mask':'default',
     ]
 if( params.containsKey('smooth') ) {
     smooth = [:]
@@ -288,6 +288,7 @@ process apply_transforms_pet {
     file anat
     file tpl
     file gmwm from gmwmMask
+    file brainMask
     file pet from petToRegister
     file centiloid from pet5070ToRegister
     file pet2anat

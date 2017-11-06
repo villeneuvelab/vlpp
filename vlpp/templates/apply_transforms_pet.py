@@ -15,9 +15,12 @@ def applyPet2Anat(input, output, ref, mat, mask):
     cmd = "WarpImageMultiTransform 3 {0} tmp.nii.gz {1} -R {2} --use-BSpline"
     call(cmd.format(input, mat, ref), shell=True)
 
-    if "${smooth.maskCSF}" == "true":
+    if "${smooth.mask}" == "CSF":
         cmd = "fslmaths tmp.nii.gz -mul {0} tmp.nii.gz"
         call(cmd.format(mask), shell=True)
+    else:
+        cmd = "fslmaths tmp.nii.gz -mul ${brainMask} tmp.nii.gz"
+        call(cmd, shell=True)
 
     if "${smooth.ignore}" == "true":
         cmd = "fslmaths tmp.nii.gz -fmean {0}"
