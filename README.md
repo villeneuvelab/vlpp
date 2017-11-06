@@ -1,6 +1,6 @@
 # Villeneuve Laboratory PET Pipeline (VLPP)
 
-VLPP is an open-source software for analyzing PET images combined with freesurfer output from MRI.
+VLPP is an open-source software for analyzing PET images combined with freesurfer.
 
 VLPP is builded with the [Nextflow framework][nextflow] which enables scalable and reproducible scientific workflows.
 
@@ -10,7 +10,7 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 
 ###### Mandatories arguments:
 
-- `--pet`: PET file (mnc, nii or nii.gz)
+- `--pet`: PET file (`mnc`, `nii` or `nii.gz`)
 - `--freesurfer`: Freesurfer directory of the participant
 - `--participant`: Participant code
 
@@ -42,12 +42,12 @@ Default Parameters:
         "whitematter": [2, 41]
     }
 }
-
 ```
 
 #### `realign`
 
-Realign frames of your participant
+Realign frames of the participant
+
   - `ignore`: set it to `true` if you want to skip this step. Will be automatically ignore if PET data has only one frame.
 
 #### `smooth`
@@ -67,7 +67,7 @@ Please follow this [link][guillimin-doc].
 
 ## Install
 
-Clone this repository and add the `vlpp` and `scripts` direcetories to your `PATH`
+Clone this repository and add the `vlpp` and `scripts` directories to your `PATH`.
 
 ###### Software dependencies
 
