@@ -6,7 +6,6 @@ vim: syntax=groovy
     Villeneuve Laboratory PET Pipeline (VLPP)
 
     For any bugs or problems found, please contact us at:
-      - christophe.bedetti@criugm.qc.ca
       - https://github.com/villeneuvelab/vlpp/issues
 */
 
