@@ -14,9 +14,9 @@ Author:
 
 if ( params.containsKey('help') ) {
     println """\
-    Execute the vlpp project
-    Usage: vlpp-qa --vlpp_dir <> --freesurfer <> --participant <> [--tpl <> -params-file <>]
-        Options:
+
+    Usage: vlpp-qa
+    Options:
         --vlpp_dir
             Directory containing all your subjects directories
         --freesurfer
@@ -28,8 +28,6 @@ if ( params.containsKey('help') ) {
         --help
             Print vlpp usage
         Nextflow options:
-        -params-file
-            Load script parameters from a JSON/YAML file
         -resume
             Execute the script using the cached results, useful to continue
             executions that was stopped by an error
@@ -40,36 +38,12 @@ if ( params.containsKey('help') ) {
     System.exit(0)
 }
 
-if( params.containsKey('tpl') ) {
-    tpl = file params.tpl
-    }
-else {
-    //tpl = file baseDir / "atlas" / "MNI152_T1_1mm.nii.gz"
-    tpl = file baseDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
-}
-
-/*
-['study', 'tracer', 'realign', 'smooth'].each {
-    if( !params.containsKey(it) ) {
-        params[it] = null
-    }
-}
-*/
-
-/*
-['vlpp_dir'].each {
-    if( !params.containsKey(it) ) {
-        println "The parameter `${it}` is not set"
-        println "`vlpp --help` for vlpp usage"
-        println "`vlpp -help` for nextflow usage"
-        System.exit(0)
-    }
-}
-*/
-
+println("$LOCAL_VL_DIR")
+localDir = file "$LOCAL_VL_DIR"
+tpl = file localDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
 suffix = params.suffix
 
-/*
+
 println """\
         ===================
         V L P P - Q A - N F
@@ -78,7 +52,6 @@ println """\
         ===================
         """
         .stripIndent()
-*/
 
 
 /*
@@ -89,11 +62,11 @@ subjects = Channel
     .fromPath( workflow.launchDir / ".." / "sub-*", type: 'dir' )
     .map { it -> [
         "sub": it.baseName,
-        "anat": it / "anat" / "${it.baseName}${suffix["anat"]}",
-        "atlas": it / "anat" / "${it.baseName}${suffix["atlas"]}",
-        "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix["mask"]}",
-        "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix["mask"]}",
-        "pet": it / "pet" / "${it.baseName}${suffix["petInAnat"]}",
+        "anat": it / "anat" / "${it.baseName}${suffix.anat}",
+        "atlas": it / "anat" / "${it.baseName}${suffix.atlas}",
+        "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix.mask}",
+        "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix.mask}",
+        "pet": it / "pet" / "${it.baseName}*space-anat${suffix.pet}",
     ]}
 //subjects.into { anat; atlas; pet; petAtlas; dashboard }
 
@@ -106,11 +79,14 @@ process dashboard {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
+    errorStrategy "ignore"
+
     input:
     val sub from subjects
 
     output:
     file "data/*_mosaic.jpg"
+    file "data/*.js"
     file "dashboards/*.html"
 
     script:
@@ -135,6 +111,7 @@ process assets {
     from os.path import join as opj
     os.mkdir("assets")
     assetsFiles = [
+        opj('bootstrap', 'assets', 'css', 'bootstrap.min.css'),
         opj('dashboards', 'assets', 'css', 'keen-dashboards.css'),
         opj('dashboards', 'assets', 'js', 'keen-analytics.js'),
         opj('brainsprite.js', 'assets', 'brainsprite.min.js'),
