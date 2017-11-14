@@ -72,13 +72,14 @@ subjects = Channel
 
 
 /*
- * Dashboards
+ * Mosaics
  */
 
-process dashboard {
+process mosaics {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
+    //When an input file is not found
     errorStrategy "ignore"
 
     input:
@@ -86,11 +87,32 @@ process dashboard {
 
     output:
     file "data/*_mosaic.jpg"
-    file "data/*.js"
-    file "dashboards/*.html"
+    file "data/*.json" into participant_json
 
     script:
-    template "dashboard.py"
+    template "qa_mosaics.py"
+}
+
+participant_jsons = participant_json.toList()
+
+
+/*
+ * Dashboards
+ */
+
+process dashboards {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    val participant_jsons
+
+    output:
+    file "*.html"
+    file "data/*"
+
+    script:
+    template "qa_dashboards.py"
 }
 
 /*
@@ -102,7 +124,7 @@ process assets {
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     output:
-    file "assets/*"
+    file "assets/*/*"
 
     """
     #!/usr/bin/env python
@@ -111,15 +133,21 @@ process assets {
     from os.path import join as opj
     os.mkdir("assets")
     assetsFiles = [
-        opj('bootstrap', 'assets', 'css', 'bootstrap.min.css'),
-        opj('dashboards', 'assets', 'css', 'keen-dashboards.css'),
-        opj('dashboards', 'assets', 'js', 'keen-analytics.js'),
-        opj('brainsprite.js', 'assets', 'brainsprite.min.js'),
-        opj('brainsprite.js', 'assets', 'jquery-1.9.1', 'jquery.min.js'),
+        ['bootstrap', 'assets', 'css', 'bootstrap.min.css'],
+        ['dashboards', 'assets', 'css', 'keen-dashboards.css'],
+        ['select2', 'select2.min.css'],
+        ['brainsprite.js', 'assets', 'jquery-1.9.1', 'jquery.min.js'],
+        ['brainsprite.js', 'assets', 'brainsprite.min.js'],
+        ['select2', 'select2.min.js'],
+        #['dashboards', 'assets', 'js', 'keen-analytics.js'],
         ]
     for f in assetsFiles:
-        os.symlink(opj(os.environ["LOCAL_VL_DIR"], f),
-                opj("assets", os.path.basename(f)))
+        source = [os.environ["LOCAL_VL_DIR"]] + f
+        try:
+            os.mkdir(opj("assets", f[0]))
+        except:
+            pass
+        os.symlink(opj(*source), opj("assets", f[0], f[-1]))
     """
 }
 

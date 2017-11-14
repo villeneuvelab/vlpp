@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Villeneuve Lab PET Pipeline</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" type="text/css" href="./assets/bootstrap/bootstrap.min.css" />
+  <!-- Dashboard -->
+  <link rel="stylesheet" type="text/css" href="./assets/dashboards/keen-dashboards.css" />
+  <!-- select2 -->
+  <link rel="stylesheet" type="text/css" href="./assets/select2/select2.min.css" />
+</head>
+
+<body class="keen-dashboard" style="padding-top: 80px;">
+
+  <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="./index.html">Overview</a>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-left">
+          <li><a href="registration_T1w.html">T1w registration</a></li>
+          <!--li><a href="registration_tpl.html">MNI registration</a></li-->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+
+    <div class="row">
+
+      <div class="col-sm-3">
+        <div class="chart-wrapper">
+          <div class="chart-stage">
+            <select class="select-subject" style="width: 100%"></select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {% for info in infos %}
+
+      <div class="col-sm-6">
+        <div class="chart-wrapper">
+          <div class="chart-title">
+              {{info.title}}
+          </div>
+          <div class="chart-stage">
+              <canvas id="canvas_{{info.tag}}">
+              <img id="sprite_{{info.tag}}" class="hidden" src="">
+          </div>
+          <div class="chart-notes">
+              {{info.notes}}
+          </div>
+        </div>
+      </div>
+
+    {% endfor %}
+    <hr>
+  </div>
+  <p class="small text-muted">Built with &#9829; at <a href="http://www.villeneuvelab.com/fr/accueil/">Villeneuve Lab</a> using dashboards from <a href="https://keen.io">Keen IO</a></p>
+
+  <!-- brainsprite -->
+  <script type="text/javascript" src="./assets/brainsprite.js/jquery.min.js"></script>
+  <script type="text/javascript" src="./assets/brainsprite.js/brainsprite.min.js"></script>
+  <!-- select 2 -->
+  <script type="text/javascript" src="./assets/select2/select2.min.js"></script>
+  <!-- data -->
+  <script type="text/javascript" src="./data/dataSubjects.js"></script>
+
+
+  <script>
+
+  $(document).ready(function() {
+
+    function setBrainsprites (data) {
+      for (i=0; i<registrationT1wTags.length; ++i) {
+        var tag = registrationT1wTags[i];
+        var values = data.registrationsT1w;
+
+        var newSrc = './data/' + data.text + '_' + tag + '_mosaic.jpg'
+        $("#sprite_" + tag).attr('src', newSrc);
+
+        brainMaps[tag] = brainsprite({
+          canvas: "canvas_"+tag,
+          sprite: "sprite_"+tag,
+          nbSlice: values.nbSlice,
+          colorBackground: "#000000",
+          //colorFont: "#FFFFFF",
+          //flagCoordinates: true,
+          //origin: values.origin,
+          //voxelSize: values.voxelSize,
+          onclick: function(e) {
+            for (j=0; j<registrationT1wTags.length; ++j) {
+              var bmap = registrationT1wTags[j];
+              brainMaps[bmap].numSlice = this.numSlice;
+              brainMaps[bmap].drawAll();
+            }
+          },
+          //overlay: {
+            //sprite: "overlay_"+key,
+            //nbSlice: values.nbSlice,
+            //smooth: true
+          //},
+          //colorMap: {
+            //img: "colormap_"+key,
+            //min: values.min,
+            //max: values.max,
+          //},
+        });
+      }
+    }
+
+    function changeSpriteSrc (data) {
+      for (i=0; i<registrationT1wTags.length; ++i) {
+        var tag = registrationT1wTags[i];
+        var values = data.registrationsT1w;
+
+        var newSrc = './data/' + data.text + '_' + tag + '_mosaic.jpg'
+        //$("#sprite_" + tag).attr('src', '');
+        $("#sprite_" + tag).attr('src', newSrc);
+
+        brainMaps[tag].nbSlice = values.nbSlice;
+      }
+    }
+
+    <!-- Add a subject selection -->
+    $(".select-subject").select2({
+      data: listSubject
+    });
+    var $eventSelect = $(".select-subject");
+    $eventSelect.on("select2:select", function (e) {
+      changeSpriteSrc(listSubject[e.params.data.id]);
+    })
+
+    function mod(n, m) {
+      return ((n % m) + m) % m;
+    }
+
+    <!--Move on to the next subject-->
+    function nextSubject () {
+      $es = $(".select-subject");
+      newId = mod(
+        parseInt($es.val()) + 1,
+        listSubject.length);
+      changeSpriteSrc(listSubject[newId]);
+      <!--Update the selection of the subject button-->
+      $es.val(newId);
+      $es.trigger('change');
+    }
+
+    <!--Move on to the previous subject-->
+    function previousSubject () {
+      $es = $(".select-subject");
+      newId = mod(
+        parseInt($es.val()) - 1,
+        listSubject.length);
+      changeSpriteSrc(listSubject[newId]);
+      <!--Update the selection of the subject button-->
+      $es.val(newId);
+      $es.trigger('change');
+    }
+
+    <!--Changing subjects with left and right arrows (prev and next, resp)-->  
+    function reactKey(key){
+      if (key==39) {
+        nextSubject()
+      } else if (key==37) {
+        previousSubject()
+      };
+    };
+    window.onkeydown = function(e) { reactKey(e.keyCode) };
+
+    var brainMaps = [];
+    $es = $(".select-subject");
+    setBrainsprites(listSubject[$es.val()])
+
+  });
+
+  </script>
+
+</body>
+</html>
