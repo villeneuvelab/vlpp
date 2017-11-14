@@ -17,4 +17,4 @@ cd qa
 vlpp-qa.nf -resume
 
 cd ${PBS_O_WORKDIR}
-tar zcvf qa.tar.gz qa/
+tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html

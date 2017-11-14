@@ -38,9 +38,8 @@ if ( params.containsKey('help') ) {
     System.exit(0)
 }
 
-println("$LOCAL_VL_DIR")
 localDir = file "$LOCAL_VL_DIR"
-tpl = file localDir / "atlas" / "MNI152_T1_1mm_brain.nii.gz"
+tpl = file localDir / "atlas" / "MNI152_T1_1mm_brain_mask.nii.gz"
 suffix = params.suffix
 
 
@@ -48,7 +47,6 @@ println """\
         ===================
         V L P P - Q A - N F
         -------------------
-        template       : ${tpl.baseName}
         ===================
         """
         .stripIndent()
@@ -58,17 +56,18 @@ println """\
  * SelectFiles
  */
 
-subjects = Channel
+Channel
     .fromPath( workflow.launchDir / ".." / "sub-*", type: 'dir' )
     .map { it -> [
         "sub": it.baseName,
         "anat": it / "anat" / "${it.baseName}${suffix.anat}",
+        "anatTpl": it / "anat" / "${it.baseName}_space-tpl${suffix.anat}",
         "atlas": it / "anat" / "${it.baseName}${suffix.atlas}",
         "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix.mask}",
         "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix.mask}",
         "pet": it / "pet" / "${it.baseName}*space-anat${suffix.pet}",
-    ]}
-//subjects.into { anat; atlas; pet; petAtlas; dashboard }
+        "suvr": it / "pet" / "${it.baseName}*space-tpl_ref-cerebellumCortex${suffix.suvr}",
+    ]}.into { subjects_T1w; subjects_tpl }
 
 
 /*
@@ -83,7 +82,7 @@ process mosaics {
     errorStrategy "ignore"
 
     input:
-    val sub from subjects
+    val sub from subjects_T1w
 
     output:
     file "data/*_mosaic.jpg"
@@ -93,7 +92,26 @@ process mosaics {
     template "qa_mosaics.py"
 }
 
+process mosaics_tpl {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    //When an input file is not found
+    errorStrategy "ignore"
+
+    input:
+    val sub from subjects_tpl
+
+    output:
+    file "data/*_mosaic.jpg"
+    file "data/*.json" into participant_json_tpl
+
+    script:
+    template "qa_mosaics_tpl.py"
+}
+
 participant_jsons = participant_json.toList()
+participant_jsons_tpl = participant_json_tpl.toList()
 
 
 /*
@@ -114,6 +132,22 @@ process dashboards {
     script:
     template "qa_dashboards.py"
 }
+
+process dashboards_tpl {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    val participant_jsons_tpl
+
+    output:
+    file "*.html"
+    file "data/*"
+
+    script:
+    template "qa_dashboards_tpl.py"
+}
+
 
 /*
  * Assets
