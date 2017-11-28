@@ -64,13 +64,18 @@ def get_arguments():
     parser.add_argument(
             '-m', '--mode',
             required=False,
-            help='How to search for pet data: dian, pad',
+            help='How to search for pet data: dian, pad, bids',
             )
 
     parser.add_argument(
             '--submit',
             required=False, action="store_true",
             help='Submit the qsub scripts',
+            )
+
+    parser.add_argument(
+            '--debug',
+            required=False, action="store_true",
             )
 
     return parser.parse_args()
@@ -119,6 +124,11 @@ class Qsub(object):
                     "/sf1/project/yai-974-aa")
             imgName = line["img-name"]
             pattern = imgName.replace(".gz", "")
+        elif self.mode == "bids":
+            petDir = os.path.join(
+                    os.path.abspath(self.args.pet_dir),
+                    self.participant(line), "pet")
+            pattern = self.args.pet_pattern
         else:
             if self.args.pet_dir:
                 petDir = os.path.join(
@@ -129,7 +139,13 @@ class Qsub(object):
                 sys.exit()
             pattern = self.args.pet_pattern
 
-        return glob.glob(os.path.join(petDir, pattern))[0]
+        try:
+            return glob.glob(os.path.join(petDir, pattern))[0]
+        except:
+            print("Could not find any PET file")
+            print("PET directory: {}".format(petDir))
+            print("PET pattern: {}".format(pattern))
+            sys.exit()
 
     def fsDir(self, line):
         if self.mode == "pad":
@@ -141,6 +157,10 @@ class Qsub(object):
                     "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
                     "derivatives", "freesurfer-v5.3.0",
                     "sub-" + line.participant_id + "_ses-" + line.session_id)
+        elif self.mode == "bids":
+            return os.path.join(
+                    os.path.abspath(self.args.fs_dir),
+                    self.participant(line) + "_T1w")
         else:
             if self.args.fs_dir:
                 return os.path.join(

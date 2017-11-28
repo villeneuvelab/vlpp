@@ -1,4 +1,4 @@
-var registrationT1wTags = ["anattpl", "pettpl"];
+var registrationT1wTags = ["centCerebGry", "centPons", "centWhlCblBrnStm", "centWhlCbl", "centctx"];
 var listSubject = [
 {% for p in participants %}
 {

@@ -25,10 +25,10 @@ def applyAnat2Tpl(input, output, ref, warp, tag, interp=4):
     batch = "apply_anat2tpl_{0}.m".format(tag)
     j2_env.get_template('apply_anat2tpl.m').stream(**tags).dump(batch)
     call("matlab -nodisplay < {0}".format(batch), shell=True)
-    call("gzip rwimgToTpl.nii", shell=True)
-    os.rename("rwimgToTpl.nii.gz", output)
+    call("gzip wimgToTpl.nii", shell=True)
+    os.rename("wimgToTpl.nii.gz", output)
     os.remove("imgToTpl.nii")
-    os.remove("wimgToTpl.nii")
+    #os.remove("wimgToTpl.nii")
 
 
 class SuvrCalc(object):
@@ -76,16 +76,16 @@ def main():
             "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
     SuvrCalc(pet, mask, suvrPet)
 
-    suvrPetInTpl = suvrPet.replace("space-anat", "space-tpl")
-    applyAnat2Tpl(suvrPet, suvrPetInTpl, tpl, anat2tpl, "pet")
+    #suvrPetInTpl = suvrPet.replace("space-anat", "space-tpl")
+    #applyAnat2Tpl(suvrPet, suvrPetInTpl, tpl, anat2tpl, "pet")
 
     #Centiloid
     suvr5070 = os.path.join("centiloid", "${centiloid}".replace(
             "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
     SuvrCalc(centiloid, mask, suvr5070)
 
-    suvr5070inTpl = suvr5070.replace("space-anat", "space-tpl")
-    applyAnat2Tpl(suvr5070, suvr5070inTpl, tpl, anat2tpl, "5070")
+    #suvr5070inTpl = suvr5070.replace("space-anat", "space-tpl")
+    #applyAnat2Tpl(suvr5070, suvr5070inTpl, tpl, anat2tpl, "5070")
 
 
 if __name__ == '__main__':

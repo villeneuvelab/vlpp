@@ -27,14 +27,29 @@ def main():
     tags = {
             "infos": [
                 {
-                    "tag": "anattpl",
-                    "title": "T1",
-                    "notes": "Freesufer T1 in MNI space",
+                    "tag": "centctx",
+                    "title": "Centiloid Std VOI",
+                    "notes": "PET image in MNI space with VOI ctx",
                 },
                 {
-                    "tag": "pettpl",
-                    "title": "PET",
-                    "notes": "PET image in MNI space",
+                    "tag": "centCerebGry",
+                    "title": "Centiloid Std VOI",
+                    "notes": "PET image in MNI space with VOI CerebGry",
+                },
+                {
+                    "tag": "centPons",
+                    "title": "Centiloid Std VOI",
+                    "notes": "PET image in MNI space with VOI Pons",
+                },
+                {
+                    "tag": "centWhlCblBrnStm",
+                    "title": "Centiloid Std VOI",
+                    "notes": "PET image in MNI space with VOI WhlCblBrnStm",
+                },
+                {
+                    "tag": "centWhlCbl",
+                    "title": "Centiloid Std VOI",
+                    "notes": "PET image in MNI space with VOI WhlCbl",
                 },
                 ],
             }

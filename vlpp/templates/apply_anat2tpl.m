@@ -16,17 +16,19 @@ try,
 
         matlabbatch{1}.spm.spatial.normalise.write.subj.def = {'{{anat2tpl}}'};
         matlabbatch{1}.spm.spatial.normalise.write.subj.resample = {'{{img}},1'};
-        matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [-78 -112 -70
-                                                                  78 76 85];
+        %matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [-78 -112 -70
+        %                                                          78 76 85];
+        matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [NaN NaN NaN
+                                                                  NaN NaN NaN];
         matlabbatch{1}.spm.spatial.normalise.write.woptions.vox = [1 1 1];
         matlabbatch{1}.spm.spatial.normalise.write.woptions.interp = {{interp}};
         matlabbatch{1}.spm.spatial.normalise.write.woptions.prefix = 'w';
-        matlabbatch{2}.spm.spatial.coreg.write.ref = {'{{ref}},1'};
-        matlabbatch{2}.spm.spatial.coreg.write.source(1) = cfg_dep('Normalise: Write: Normalised Images (Subj 1)', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('()',{1}, '.','files'));
-        matlabbatch{2}.spm.spatial.coreg.write.roptions.interp = {{interp}};
-        matlabbatch{2}.spm.spatial.coreg.write.roptions.wrap = [0 0 0];
-        matlabbatch{2}.spm.spatial.coreg.write.roptions.mask = 0;
-        matlabbatch{2}.spm.spatial.coreg.write.roptions.prefix = 'r';
+        %matlabbatch{2}.spm.spatial.coreg.write.ref = {'{{ref}},1'};
+        %matlabbatch{2}.spm.spatial.coreg.write.source(1) = cfg_dep('Normalise: Write: Normalised Images (Subj 1)', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('()',{1}, '.','files'));
+        %matlabbatch{2}.spm.spatial.coreg.write.roptions.interp = {{interp}};
+        %matlabbatch{2}.spm.spatial.coreg.write.roptions.wrap = [0 0 0];
+        %matlabbatch{2}.spm.spatial.coreg.write.roptions.mask = 0;
+        %matlabbatch{2}.spm.spatial.coreg.write.roptions.prefix = 'r';
 
 
         spm_jobman('run', matlabbatch);

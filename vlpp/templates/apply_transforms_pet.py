@@ -46,10 +46,10 @@ def applyAnat2Tpl(input, output, ref, warp, tag, interp=4):
     batch = "apply_anat2tpl_{0}.m".format(tag)
     j2_env.get_template('apply_anat2tpl.m').stream(**tags).dump(batch)
     call("matlab -nodisplay < {0}".format(batch), shell=True)
-    call("gzip rwimgToTpl.nii", shell=True)
-    os.rename("rwimgToTpl.nii.gz", output)
+    call("gzip wimgToTpl.nii", shell=True)
+    os.rename("wimgToTpl.nii.gz", output)
     os.remove("imgToTpl.nii")
-    os.remove("wimgToTpl.nii")
+    #os.remove("wimgToTpl.nii")
 
 
 def applyPet2TplAnts(input, output, ref, anat2tpl, anat2tpl_aff, pet2anat):

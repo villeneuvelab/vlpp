@@ -297,7 +297,7 @@ process apply_transforms_pet {
     file "pet/*space-anat*" into petInAnat
     file "pet/*space-tpl*"
     file "centiloid/*space-anat*" into pet5070InAnat
-    file "centiloid/*space-tpl*"
+    file "centiloid/*space-tpl*" into pet5070InTpl
 
     script:
     template "apply_transforms_pet.py"
@@ -385,7 +385,7 @@ process suvr_calc_in_anat {
     output:
     file "pet/*space-anat*" + suffix.suvr into petSuvrToCent, petSuvrToStats
     file "centiloid/*space-anat*" + suffix.suvr into pet5070SuvrToCent, pet5070SuvrToStats
-    file "*/*space-tpl*"
+    //file "*/*space-tpl*"
 
     script:
     template "suvrcalc.py"
@@ -413,6 +413,21 @@ process centiloid_calc_in_anat {
     template "centiloidcalc.py"
 }
 
+process centiloid_calc_in_tpl {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    file pet from pet5070InTpl
+
+    output:
+    file "centiloid/*"
+
+    script:
+    template "centiloidcalc_tpl.py"
+
+}
+
 
 /*
  * Segstats
@@ -433,6 +448,7 @@ process stats_pet_anat {
     template "stats_anat.py"
 }
 
+/*
 process stats_centiloid_anat {
 
     publishDir "stats", mode: 'copy', overwrite: true
@@ -447,4 +463,4 @@ process stats_centiloid_anat {
     script:
     template "stats_anat.py"
 }
-
+*/

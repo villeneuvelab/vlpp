@@ -66,7 +66,7 @@ Channel
         "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix.mask}",
         "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix.mask}",
         "pet": it / "pet" / "${it.baseName}*space-anat${suffix.pet}",
-        "suvr": it / "pet" / "${it.baseName}*space-tpl_ref-cerebellumCortex${suffix.suvr}",
+        "centiloid": it / "centiloid" / "${it.baseName}*space-tpl${suffix.pet}",
     ]}.into { subjects_T1w; subjects_tpl }
 
 
