@@ -36,16 +36,41 @@ def applyAnat2Tpl(input, output, ref, warp, tag, interp=4):
 
 class CentiloidCalc(object):
 
-    def __init__(self, input, mask, suvrOutput, centOutput):
+    SCALE = {
+        # DOI:10.1016/j.jalz.2014.07.003
+        "PIB": {
+            "CerebGry": {"YC": 1.170, "AD": 2.428},
+            "WhlCbl": {"YC": 1.009, "AD": 2.076},
+            "WhlCblBrnStm": {"YC": 0.959, "AD": 1.962},
+            "Pons": {"YC": 0.761, "AD": 1.535},
+        },
+        # DOI:10.2967/jnumed.115.171595
+        "NAV": {
+            "CerebGry": False,
+            "WhlCbl": {"YC": 1.028, "AD": 2.202},
+            "WhlCblBrnStm": False,
+            "Pons": False,
+        },
+    }
+
+    def __init__(self, input, mask, suvrOutput, centOutput, roiName):
         self.input = input
         self.mask = mask
         self.suvr = suvrOutput
         self.cent = centOutput
         self.tracer = "${tracer}"
-        self._run()
+        self.roiName = roiName
 
 
-    def _run(self):
+    def get_scale(self):
+        scaleDict = self.SCALE.get(self.tracer)
+        if scaleDict:
+            return scaleDict[self.roiName]
+        else:
+            return False
+
+
+    def run(self):
         maskData = nb.load(self.mask).get_data()
 
         image = nb.load(self.input)
@@ -60,15 +85,15 @@ class CentiloidCalc(object):
 
         # compute Centiloid
         save = True
-        if self.tracer == "PIB":
-            centiloidData = ((suvrData - 1.009) * 100) / 1.067
-        elif self.tracer == "NAV":
-            centiloidData = ((suvrData - 1.028) * 100) / 1.174
+        scale = self.get_scale()
+        if self.tracer in ["PIB", "NAV"] and scale:
+            centiloidData = ((suvrData - scale["YC"]) * 100) / (scale["AD"] - scale["YC"])
         else:
             save = False
 
-        if save and self.cent is not None:
+        if save:
             nb.save(nb.Nifti1Image(centiloidData, affine), self.cent)
+        return save
 
 
 def main():
@@ -90,9 +115,8 @@ def main():
         centiloidPet = os.path.join("centiloid", pet.replace(
             "${suffix.pet}", "_ref-{0}${suffix.centiloid}".format(roiName)))
 
-        if roiName != "WhlCbl":
-            centiloidPet = None
-        CentiloidCalc(pet, mask, suvrPet, centiloidPet)
+        c = CentiloidCalc(pet, mask, suvrPet, centiloidPet, roiName)
+        centCompute = c.run()
 
         suvrData = nb.load(suvrPet).get_data()
         maskData = nb.load(roiPath.format("ctx")).get_data()
@@ -100,7 +124,7 @@ def main():
         rsl[0].append("{}_suvr".format(roiName))
         rsl[1].append("{0:.4f}".format(np.nanmean(suvrData)))
 
-        if centiloidPet:
+        if centCompute:
             centData = nb.load(centiloidPet).get_data()
             centData = np.ma.masked_where(maskData==0, centData, True)
             rsl[0].append("{}_centiloid".format(roiName))

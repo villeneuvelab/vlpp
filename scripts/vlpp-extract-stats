@@ -23,6 +23,7 @@ def get_arguments():
 
             """)
 
+    """
     parser.add_argument(
             '-r', '--ref',
             required=False, default="cerebellumCortex",
@@ -40,58 +41,103 @@ def get_arguments():
             required=False,
             help='output tsv file'
             )
+    """
 
     return parser.parse_args()
 
 
-def main():
-    args = get_arguments()
-    ref = args.ref
-    dataType = args.data
-    dataDir = os.getcwd()
+class FetchStats(object):
 
-    if args.output:
-        output = args.output
-    else:
+    def __init__(self, outputDir):
+        self.outputDir = outputDir
+
+    def stats_space_tpl(self):
+        datas = []
+
+        pattern = '*/centiloid/*.csv'
+        dataFiles = glob.glob(pattern)
+
+        if dataFiles == []:
+            print("No file found with the pattern: {}".format(pattern))
+            return
+
+        rsldf = pandas.read_csv(dataFiles[0])
+        for dataFile in dataFiles[1:]:
+            rsldf = rsldf.append(pandas.read_csv(dataFile))
+
+        rsldf.sort_values(by=["participant_id"], inplace=True)
+        rsldf.set_index("participant_id", inplace=True)
+
         output = os.path.join(
-                dataDir, 'stats', 'ref-{0}_means_{1}.tsv'.format(ref, dataType))
-        if not os.path.exists(os.path.join(dataDir, 'stats')):
-            os.mkdir(os.path.join(dataDir, 'stats'))
+                self.outputDir, "group_space-tpl_roi-ctx.csv")
 
-    subjects = []
-    datas = []
+        self._save(rsldf, output)
 
-    pattern = '{0}/*/stats/*_ref-{1}_*{2}.csv'.format(dataDir, ref, dataType)
-    dataFiles = glob.glob(pattern)
 
-    if dataFiles == []:
-        print("Found no file with the pattern:")
-        print(pattern)
-        sys.exit()
+    def stats_space_anat(self, ref):
+        subjects = []
+        datas = []
 
-    for dataFile in dataFiles:
-        subjects.append(dataFile.split("/")[-3])
-        datas.append(pandas.read_csv(dataFile))
+        pattern = '*/stats/*_ref-{0}_suvr.csv'.format(ref)
+        dataFiles = glob.glob(pattern)
 
-    df = pandas.concat(datas, keys=subjects)
-    meandf = df.get(['StructName', 'mean'])
+        if dataFiles == []:
+            print("No file found with the pattern: {}".format(pattern))
+            return
 
-    rsldf = pandas.DataFrame()
-    for struct in meandf['StructName'].xs(subjects[0]):
-        tempdf = meandf[meandf['StructName'] == struct]
-        tempdf = tempdf.rename(columns={'mean':struct}).reset_index(level=1)
-        rsldf[struct] = tempdf[struct]
+        for dataFile in dataFiles:
+            subjects.append(dataFile.split("/")[-3])
+            datas.append(pandas.read_csv(dataFile))
 
-    rsldf = rsldf.sort_index()
+        df = pandas.concat(datas, keys=subjects)
+        meandf = df.get(['StructName', 'mean'])
 
-    if os.path.exists(output):
-        print("{} already exists".format(output))
-        msg = 'Shall we overwrite it ?'
-        proceed = input("%s (y/N) " % msg).lower() == 'y'
-        if proceed:
-            rsldf.to_csv(output, sep="\t")
-    else:
-        rsldf.to_csv(output, sep="\t")
+        rsldf = pandas.DataFrame()
+        for struct in meandf['StructName'].xs(subjects[0]):
+            tempdf = meandf[meandf['StructName'] == struct]
+            tempdf = tempdf.rename(columns={'mean':struct}).reset_index(level=1)
+            rsldf[struct] = tempdf[struct]
+
+        rsldf = rsldf.sort_index()
+        rsldf.index.name = "participant_id"
+
+        output = os.path.join(
+                self.outputDir, "group_space-anat_ref-{}_suvr.csv".format(ref))
+
+        self._save(rsldf, output)
+
+    def _save(self, rsldf, output):
+        if os.path.exists(output):
+            print("{} already exists".format(output))
+            msg = 'Shall we overwrite it ?'
+            proceed = input("%s (y/N) " % msg).lower() == 'y'
+            if proceed:
+                rsldf.to_csv(output, sep="\t", na_rep="n/a")
+        else:
+            rsldf.to_csv(output, sep="\t", na_rep="n/a")
+
+
+def main():
+    #args = get_arguments()
+    #ref = args.ref
+    #dataType = args.data
+
+    outputDir = os.path.join(os.getcwd(), 'stats')
+    if not os.path.exists(outputDir):
+        os.mkdir(outputDir)
+
+    fetcher = FetchStats(outputDir)
+
+    ANAT_ROIS = [
+            "cerebellumCortex",
+            "wholeCerebellum",
+            "whitematter",
+            ]
+
+    for ref in ANAT_ROIS:
+        fetcher.stats_space_anat(ref)
+    fetcher.stats_space_tpl()
+
 
 if __name__ == '__main__':
     sys.exit(main())

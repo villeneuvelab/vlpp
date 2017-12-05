@@ -37,7 +37,6 @@ Default Parameters:
     },
     "fsReferences": {
         "cerebellumCortex": [8, 47],
-        "cerebellumCortexErode": [8, 47],
         "wholeCerebellum": [7, 8, 46, 47],
         "whitematter": [2, 41]
     }
