@@ -66,7 +66,9 @@ else {
 }
 
 //realign
-realignDefault = ['ignore':false]
+realignDefault = [
+    'ignore':false,
+    ]
 if( params.containsKey('realign') ) {
     realign = [:]
     realignDefault.each {
@@ -92,7 +94,7 @@ else{ smooth = smoothDefault }
 //freesurfer references
 fsRefDefault = [
     "cerebellumCortex": [8, 47],
-    "cerebellumCortexErode": [8, 47],
+    //"cerebellumCortexErode": [8, 47],
     "wholeCerebellum": [7, 8, 46, 47],
     "whitematter": [2, 41],
     ]
@@ -104,7 +106,8 @@ if( params.containsKey('fsReferences') ) {
 
 // Channels and pipeline values
 baseSf1 = file "/sf1"
-tpl = baseSf1 / "project" / "yai-974-aa" / "local" / "atlas" / "MNI152_T1_1mm.nii"
+localDir = baseSf1 / "project" / "yai-974-aa" / "local"
+tpl = localDir / "atlas" / "MNI152_T1_1mm.nii"
 
 participant = params.participant
 suffix = params.suffix
@@ -123,11 +126,11 @@ println """\
         =============
         V L P P - N F
         -------------
-        PET file             : ${petInput}
-        freesurfer directory : ${freesurferDir}
-        participant          : ${participant}
-        dataset              : ${dataset}
-        tracer               : ${tracer}
+        PET file     : ${petInput}
+        freesurfer   : ${freesurferDir}
+        participant  : ${participant}
+        dataset      : ${dataset}
+        tracer       : ${tracer}
         ============="""
         .stripIndent()
 
@@ -144,7 +147,7 @@ process anatconvert {
     file img from anatInput
 
     output:
-    file "*" + suffix.anat into anat
+    file "*${suffix.anat}" into anat
 
     """
     mri_convert --out_type nii --input_volume ${img} \
@@ -160,7 +163,7 @@ process atlasconvert {
     file img from atlasInput
 
     output:
-    file "*" + suffix.atlas into atlas
+    file "*${suffix.atlas}" into atlas
 
     """
     mri_convert --out_type nii --input_volume ${img} \
@@ -371,7 +374,7 @@ process mask2tpl {
  * Suvr & Centiloid
  */
 
-process suvr_calc_in_anat {
+process suvr_anat_space {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
@@ -383,14 +386,15 @@ process suvr_calc_in_anat {
     file anat2tpl
 
     output:
-    file "pet/*space-anat*" + suffix.suvr into petSuvrToCent, petSuvrToStats
-    file "centiloid/*space-anat*" + suffix.suvr into pet5070SuvrToCent, pet5070SuvrToStats
+    file "pet/*space-anat*" + suffix.suvr into petSuvrToStats
+    //file "centiloid/*space-anat*" + suffix.suvr into pet5070SuvrToCent, pet5070SuvrToStats
     //file "*/*space-tpl*"
 
     script:
     template "suvrcalc.py"
 }
 
+/*
 process centiloid_calc_in_anat {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
@@ -404,7 +408,8 @@ process centiloid_calc_in_anat {
     output:
     file "pet/*space-anat*" + suffix.centiloid into petCentToStats
     file "centiloid/*space-anat*" + suffix.centiloid into pet5070CentToStats
-    file "*/*space-tpl*"
+    file "centiloid/*space-tpl*"
+    file "pet/*space-tpl*"
 
     when:
     tracer.matches("PIB|NAV")
@@ -412,8 +417,9 @@ process centiloid_calc_in_anat {
     script:
     template "centiloidcalc.py"
 }
+*/
 
-process centiloid_calc_in_tpl {
+process centiloid_tpl_space {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
@@ -424,8 +430,7 @@ process centiloid_calc_in_tpl {
     file "centiloid/*"
 
     script:
-    template "centiloidcalc_tpl.py"
-
+    template "centiloidcalc.py"
 }
 
 

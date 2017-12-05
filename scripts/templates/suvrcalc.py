@@ -49,7 +49,7 @@ class SuvrCalc(object):
 
         # compute
         refData = np.ma.masked_where(maskData==0, data, True)
-        suvrData = data / refData.mean()
+        suvrData = data / np.nanmean(refData)
         nb.save(nb.Nifti1Image(suvrData, affine), self.suvr)
 
 
@@ -63,13 +63,13 @@ def _roiName(mask):
 
 def main():
     os.mkdir("pet")
-    os.mkdir("centiloid")
+    #os.mkdir("centiloid")
     pet = "${pet}"
-    centiloid = "${centiloid}"
+    #centiloid = "${centiloid}"
     mask = "${mask}"
     roiName = _roiName(mask)
-    tpl = "${tpl}"
-    anat2tpl = "${anat2tpl}"
+    #tpl = "${tpl}"
+    #anat2tpl = "${anat2tpl}"
 
     #PET
     suvrPet = os.path.join("pet", "${pet}".replace(
@@ -80,9 +80,9 @@ def main():
     #applyAnat2Tpl(suvrPet, suvrPetInTpl, tpl, anat2tpl, "pet")
 
     #Centiloid
-    suvr5070 = os.path.join("centiloid", "${centiloid}".replace(
-            "${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
-    SuvrCalc(centiloid, mask, suvr5070)
+    #suvr5070 = os.path.join("centiloid", "${centiloid}".replace(
+            #"${suffix.pet}", "_ref-{0}${suffix.suvr}".format(roiName)))
+    #SuvrCalc(centiloid, mask, suvr5070)
 
     #suvr5070inTpl = suvr5070.replace("space-anat", "space-tpl")
     #applyAnat2Tpl(suvr5070, suvr5070inTpl, tpl, anat2tpl, "5070")

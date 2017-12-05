@@ -60,11 +60,11 @@ class ImgStats(object):
 
             stats.append([
                 structName,
-                float("{0:.4f}".format(data.mean())),
-                float("{0:.4f}".format(data.std())),
-                float("{0:.4f}".format(data.min())),
-                float("{0:.4f}".format(data.max())),
-                float("{0:.4f}".format(data.max()-data.min())),
+                float("{0:.4f}".format(np.nanmean(data))),
+                float("{0:.4f}".format(np.nanstd(data))),
+                float("{0:.4f}".format(np.nanmin(data))),
+                float("{0:.4f}".format(np.nanmax(data))),
+                float("{0:.4f}".format(np.nanmax(data)-np.nanmin(data))),
                 ])
 
         with open(self.outputSpecial, 'wt') as csvfile:

@@ -67,7 +67,7 @@ class Qa(object):
         APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         env = Environment(
                 loader=FileSystemLoader(os.path.join(
-                        APP_DIR, 'vlpp', 'templates')),
+                        APP_DIR, 'scripts', 'templates')),
                 trim_blocks=True,
                 )
         return env.get_template("guillimin_qa.sh")

@@ -2,15 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-import os
+from vlpp.utils import splitext_
 from subprocess import call
 
-
-def splitext_(path):
-    for ext in ['.nii.gz']:
-        if path.endswith(ext):
-            return path[:-len(ext)], path[-len(ext):]
-    return os.path.splitext(path)
 
 def main():
     img = "${img}"
@@ -22,6 +16,7 @@ def main():
         call("fslmaths petconvert.nii -nan {0}".format(output), shell=True)
     elif ext in [".nii", ".nii.gz"]:
         call("fslmaths {0} -nan {1}".format(img, output), shell=True)
+
 
 if __name__ == '__main__':
     main()
