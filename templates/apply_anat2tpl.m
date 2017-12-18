@@ -14,7 +14,7 @@ try,
            spm_get_defaults('cmdline', 1);
         end
 
-        matlabbatch{1}.spm.spatial.normalise.write.subj.def = {'{{anat2tpl}}'};
+        matlabbatch{1}.spm.spatial.normalise.write.subj.def = {'{{warp}}'};
         matlabbatch{1}.spm.spatial.normalise.write.subj.resample = {'{{img}},1'};
         %matlabbatch{1}.spm.spatial.normalise.write.woptions.bb = [-78 -112 -70
         %                                                          78 76 85];
