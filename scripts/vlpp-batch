@@ -78,6 +78,11 @@ def get_arguments():
             required=False, action="store_true",
             )
 
+    parser.add_argument(
+            '--dev',
+            required=False, action="store_true",
+            )
+
     return parser.parse_args()
 
 
@@ -99,8 +104,10 @@ class Qsub(object):
         #Load tsv into a DataFrame
         if self.tsv.endswith("tsv"):
             delimiter = '\t'
+
         else:
             delimiter = ','
+
         self.df = pandas.read_csv(
                 self.tsv, delimiter=delimiter, comment="#", dtype=object)
 
@@ -108,7 +115,9 @@ class Qsub(object):
                 "RAPid": args.rapid,
                 "logDir": self.logDir,
                 "walltime": args.walltime,
+                "dev": args.dev,
                 }
+
 
     def petFile(self, line):
         if self.mode == "pad":
@@ -116,6 +125,7 @@ class Qsub(object):
                     "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
                     "pet", "sourcedata", line.pet_dir)
             pattern = "*_4D_*1.mnc"
+
         elif self.mode == "dian":
             #ses = line.session_id
             baseDir = line.PIB_pwd
@@ -124,11 +134,13 @@ class Qsub(object):
                     "/sf1/project/yai-974-aa")
             imgName = line["img-name"]
             pattern = imgName.replace(".gz", "")
+
         elif self.mode == "bids":
             petDir = os.path.join(
                     os.path.abspath(self.args.pet_dir),
                     self.participant(line), "pet")
             pattern = self.args.pet_pattern
+
         else:
             if self.args.pet_dir:
                 petDir = os.path.join(
@@ -147,28 +159,33 @@ class Qsub(object):
             print("PET pattern: {}".format(pattern))
             sys.exit()
 
+
     def fsDir(self, line):
         if self.mode == "pad":
             return os.path.join(
                     "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
                     "pet", "derivatives", "freesurfer", line.fs_dir)
+
         elif self.mode == "dian":
             return os.path.join(
                     "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
                     "derivatives", "freesurfer-v5.3.0",
                     "sub-" + line.participant_id + "_ses-" + line.session_id)
+
         elif self.mode == "bids":
             return os.path.join(
                     os.path.abspath(self.args.fs_dir),
                     self.participant(line) + "_T1w")
+
         else:
             if self.args.fs_dir:
                 return os.path.join(
                         os.path.abspath(self.args.fs_dir), line.fs_dir)
             else:
-                print("No base freesurfer directory found, please use `-f` option`")
+                print("No base freesurfer directory found, use `-f` option`")
                 print("See --help for more informations")
                 sys.exit()
+
 
     def participant(self, line):
         try:
@@ -247,7 +264,7 @@ class Qsub(object):
         APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         env = Environment(
                 loader=FileSystemLoader(os.path.join(
-                        APP_DIR, 'scripts', 'templates')),
+                        APP_DIR, 'templates')),
                 trim_blocks=True,
                 )
         return env.get_template("guillimin_qsub.sh")
@@ -257,6 +274,7 @@ def main():
     args = get_arguments()
     Qsub(args).run()
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

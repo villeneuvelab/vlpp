@@ -9,11 +9,15 @@
 module purge
 module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
+{% if dev %}
+module load vlpp/dev
+source activate vlpp-dev
+{% endif %}
 
 cd ${PBS_O_WORKDIR}
 mkdir -p {{participant}}
 cd {{participant}}
 
-vlpp --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -params-file ../code/config.json -resume
+vlpp --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg -resume
 
 cd ${PBS_O_WORKDIR}

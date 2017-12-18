@@ -6,7 +6,7 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 
 ## Usage
 
-`vlpp --pet <> --freesurfer <> --participant <> [-params-file <>]`
+`vlpp --pet <> --freesurfer <> --participant <> [-c <>]`
 
 ###### Mandatories arguments:
 
@@ -17,50 +17,13 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 ###### Optional arguments:
 
 - `--help`: Print vlpp usage
-- `-params-file`: Load script parameters from a JSON/YAML file
+- `-c, -config`: Add the specified file to configuration set
 - `-resume`: Execute the script using the cached results, useful to continue executions that was stopped by an error
 - `-h` or `-help`: Print the nextflow usage
 
-## Parameters
+## Configurations
 
-Default Parameters:
-
-```
-{
-    "realign": {
-        "ignore": false
-    },
-    "smooth": {
-        "ignore": false,
-        "fwhm": 6,
-        "mask": "default"
-    },
-    "fsReferences": {
-        "cerebellumCortex": [8, 47],
-        "wholeCerebellum": [7, 8, 46, 47],
-        "whitematter": [2, 41]
-    }
-}
-```
-
-#### `realign`
-
-Realign frames of the participant
-
-  - `ignore`: set it to `true` if you want to skip this step. Will be automatically ignore if PET data has only one frame.
-
-#### `smooth`
-
-Smooth the data after normalization to T1w space
-  - `ignore`: set it to `true` if you want to skip this step.
-  - `fwhm`: gaussian kernel in mm.
-  - `mask`:
-    - default: by default, PET data is masked with a brain mask.
-    - CSF: keep only grey and white matter during the smoothing step.
-
-#### `fsReferences`
-
-Define regions of reference based on freesurfer indices of aparc+aseg atlas.
+Default Parameters and explanation: see `config/default.config`
 
 ## Using the pipeline on `guillimin`
 

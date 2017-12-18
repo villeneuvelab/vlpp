@@ -1,0 +1,8 @@
+README.md
+environment.yml
+license.txt
+requirements.txt
+include config/*
+include scripts/*
+include templates/*
+recursive-include pipelines *
