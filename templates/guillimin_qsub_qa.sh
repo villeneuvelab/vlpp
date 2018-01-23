@@ -10,11 +10,19 @@ module purge
 module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
 
+{% if dev %}
+module load vlpp/dev
+source activate vlpp-dev
+{% endif %}
+
 cd ${PBS_O_WORKDIR}
 mkdir -p qa
 cd qa
 
 vlpp-qa.nf -resume
+
+# Removing work directory
+rm -Rf work/
 
 cd ${PBS_O_WORKDIR}
 tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html

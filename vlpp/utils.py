@@ -10,12 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 
 
 PKG_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-J2ENV = Environment(
-        loader=FileSystemLoader(
-                os.path.join(PKG_PATH, "templates")),
-        trim_blocks=True,
-        )
+TPL_PATH = os.path.join(PKG_PATH, "templates")
 
 
 def load_json(filename):
@@ -75,8 +70,17 @@ def run_shell(commandLine):
     return output
 
 
-def run_matlab(template_name, tags, filename):
-    J2ENV.get_template(template_name).stream(**tags).dump(filename)
+def get_jinja_tpl(templatePath)
+    path, templateName  = os.path.split(templatePath)
+
+    return Environment(
+            loader=FileSystemLoader(path or "./"),
+            trim_blocks=True,
+            ).get_template(templateName)
+
+
+def run_matlab(templatePath, tags, filename):
+    get_jinja_tpl(templateName).stream(**tags).dump(filename)
     return run_shell("matlab -nodisplay < {0}".format(filename))
 
 

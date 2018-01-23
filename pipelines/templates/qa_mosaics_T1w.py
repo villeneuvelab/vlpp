@@ -2,16 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import glob
-import json
 import os
-from jinja2 import Environment, FileSystemLoader
+
+from glob import glob
+from vlpp.utils import save_json
 from qamosaic import qamosaic
-
-
-def save_json(filename, data):
-    with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
 
 
 def main():
@@ -22,11 +17,11 @@ def main():
     participant_id = "${sub.sub}"
 
     # Images Path
-    anat = glob.glob("${sub.anat}")[0]
-    brainmask = glob.glob("${sub.brainmask}")[0]
-    atlas = glob.glob("${sub.atlas}")[0]
-    pet = glob.glob("${sub.pet}")[0]
-    cerebellumCortex = glob.glob("${sub.cerebellumCortex}")[0]
+    anat = glob("${sub.anat}")[0]
+    brainmask = glob("${sub.brainmask}")[0]
+    atlas = glob("${sub.atlas}")[0]
+    pet = glob("${sub.pet}")[0]
+    cerebellumCortex = glob("${sub.cerebellumCortex}")[0]
 
     # Anat
     tag = "anat"

@@ -3,7 +3,7 @@
 
 import os
 from glob import glob
-from .utils import run_shell, gzipd, run_matlab
+from .utils import run_shell, gzipd, run_matlab, TPL_PATH
 
 
 def applyWarpImageMultiTransform(input, ref, mat, output=None):
@@ -21,7 +21,8 @@ def applyAnat2Tpl(input, warp, interp, tag, output):
             "warp": warp,
             "interp": interp,
             }
-    run_matlab("apply_anat2tpl.m", tags, "apply_anat2tpl_{}.m".format(tag))
+    run_matlab(os.path.join(TPL_PATH, "apply_anat2tpl.m"), tags,
+            "apply_anat2tpl_{}.m".format(tag))
 
     rsl = glob("w*.nii")[0]
     run_shell("gzip {}".format(rsl))

@@ -15,19 +15,15 @@ Author:
 if ( params.containsKey('help') ) {
     println """\
 
-    Usage: vlpp-qa
+    Usage: vlpp-qa [-c <>]
     Options:
-        --vlpp_dir
-            Directory containing all your subjects directories
-        --freesurfer
-            Freesurfer directory of your participant
-        --participant
-            Participant code name
-        --tpl
-            Default: MNI152_T1_1mm_brain.nii.gz
         --help
             Print vlpp usage
         Nextflow options:
+        -c
+            Load a configuration file
+            Default configuration : look at config/qa.config
+            More information: https://www.nextflow.io/docs/latest/config.html
         -resume
             Execute the script using the cached results, useful to continue
             executions that was stopped by an error
@@ -38,9 +34,8 @@ if ( params.containsKey('help') ) {
     System.exit(0)
 }
 
-localDir = file "$LOCAL_VL_DIR"
-tpl = file localDir / "atlas" / "MNI152_T1_1mm_brain_mask.nii.gz"
-suffix = params.suffix
+tpl = file config.tpl
+suffix = config.suffix
 
 
 println """\
@@ -74,7 +69,7 @@ Channel
  * Mosaics
  */
 
-process mosaics {
+process mosaics_T1w {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
@@ -89,7 +84,7 @@ process mosaics {
     file "data/*.json" into participant_json
 
     script:
-    template "qa_mosaics.py"
+    template "qa_mosaics_T1w.py"
 }
 
 process mosaics_tpl {
@@ -129,8 +124,13 @@ process dashboards {
     file "*.html"
     file "data/*"
 
-    script:
-    template "qa_dashboards.py"
+    """
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    from vlpp.dashboards import anat_dash
+    jsonPaths = "${participant_jsons}"[1:-1].split(", ")
+    anat_dash(jsonPaths)
+    """
 }
 
 process dashboards_tpl {
@@ -144,8 +144,13 @@ process dashboards_tpl {
     file "*.html"
     file "data/*"
 
-    script:
-    template "qa_dashboards_tpl.py"
+    """
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    from vlpp.dashboards import tpl_dash
+    jsonPaths = "${participant_jsons_tpl}"[1:-1].split(", ")
+    tpl_dash(jsonPaths)
+    """
 }
 
 

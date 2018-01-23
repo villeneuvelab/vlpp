@@ -9,6 +9,7 @@ import pandas
 import sys
 import time
 
+from vlpp.utils import TPL_PATH
 from builtins import input
 from jinja2 import Environment, FileSystemLoader
 from subprocess import call
@@ -261,13 +262,10 @@ class Qsub(object):
 
     @property
     def tpl(self):
-        APP_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        env = Environment(
-                loader=FileSystemLoader(os.path.join(
-                        APP_DIR, 'templates')),
+        return Environment(
+                loader=FileSystemLoader(TPL_PATH),
                 trim_blocks=True,
-                )
-        return env.get_template("guillimin_qsub.sh")
+                ).get_template("guillimin_qsub.sh")
 
 
 def main():

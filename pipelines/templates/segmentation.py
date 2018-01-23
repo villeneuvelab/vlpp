@@ -5,7 +5,7 @@
 import os
 import shutil
 from glob import glob
-from vlpp.utils import gzipd, run_shell, run_matlab
+from vlpp.utils import gzipd, run_shell, run_matlab, TPL_PATH
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
         "anat": gzipd("${anat}"),
         "spmDir": os.path.join("${LOCAL_VL_DIR}", "matlab_tb", "spm", "v12"),
         }
-    run_matlab("segmentation.m", tags, "segmentation.m")
+    run_matlab(os.path.join(TPL_PATH, "segmentation.m"), tags, "segmentation.m")
 
     for c in glob("c*nii"):
         run_shell("gzip {}".format(c))

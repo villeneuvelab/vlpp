@@ -77,7 +77,7 @@
   <!-- select 2 -->
   <script type="text/javascript" src="./assets/select2/select2.min.js"></script>
   <!-- data -->
-  <script type="text/javascript" src="./data/dataSubjects.js"></script>
+  <script type="text/javascript" src="{{dataSubjects}}"></script>
 
 
   <script>
@@ -85,9 +85,9 @@
   $(document).ready(function() {
 
     function setBrainsprites (data) {
-      for (i=0; i<registrationT1wTags.length; ++i) {
-        var tag = registrationT1wTags[i];
-        var values = data.registrationsT1w;
+      for (i=0; i<dashTags.length; ++i) {
+        var tag = dashTags[i];
+        var values = data.configuration;
 
         var newSrc = './data/' + data.text + '_' + tag + '_mosaic.jpg'
         $("#sprite_" + tag).attr('src', newSrc);
@@ -102,8 +102,8 @@
           //origin: values.origin,
           //voxelSize: values.voxelSize,
           onclick: function(e) {
-            for (j=0; j<registrationT1wTags.length; ++j) {
-              var bmap = registrationT1wTags[j];
+            for (j=0; j<dashTags.length; ++j) {
+              var bmap = dashTags[j];
               brainMaps[bmap].numSlice = this.numSlice;
               brainMaps[bmap].drawAll();
             }
@@ -123,9 +123,9 @@
     }
 
     function changeSpriteSrc (data) {
-      for (i=0; i<registrationT1wTags.length; ++i) {
-        var tag = registrationT1wTags[i];
-        var values = data.registrationsT1w;
+      for (i=0; i<dashTags.length; ++i) {
+        var tag = dashTags[i];
+        var values = data.configuration;
 
         var newSrc = './data/' + data.text + '_' + tag + '_mosaic.jpg'
         //$("#sprite_" + tag).attr('src', '');

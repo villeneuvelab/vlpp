@@ -5,7 +5,7 @@ import nibabel
 import os
 import sys
 from glob import glob
-from .utils import add_suffix, run_shell, run_matlab
+from .utils import add_suffix, run_shell, run_matlab, TPL_PATH
 
 
 class Realign(object):
@@ -46,7 +46,6 @@ class Realign(object):
             """
             self._trimPetTo4070()
 
-            print(self.ignore)
             if self.ignore == "true":
                 """
                 If the user ignore the realign:
@@ -157,7 +156,7 @@ class Realign(object):
         tags = {
                 "files": sorted(glob("vol*.nii"))
                 }
-        run_matlab("realign.m", tags, "realign.m")
+        run_matlab(os.path.join(TPL_PATH, "realign.m"), tags, "realign.m")
 
         #merge realigned files
         rvolList = " ".join(glob("rvol*"))

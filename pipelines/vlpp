@@ -21,7 +21,7 @@ if ( params.containsKey('help') ) {
     Usage: vlpp --pet <> --freesurfer <> --participant <> [-c <>]
         Options:
         --pet
-            Pet file, it could be .mnc, .nii or .nii.gz
+            Pet file [.mnc, .nii or .nii.gz]
         --freesurfer
             Freesurfer directory of the participant
         --participant
@@ -31,7 +31,8 @@ if ( params.containsKey('help') ) {
         Nextflow options:
         -c
             Load a configuration file
-            See default in the file config/default.config
+            Default configuration : launch vlpp-default-cfg
+            Example configuration : launch vlpp-example-cfg
             More information: https://www.nextflow.io/docs/latest/config.html
         -resume
             Execute the script using the cached results, useful to continue
@@ -60,8 +61,8 @@ if( config.dataset == "DIAN" ) { config.tracer = "PIB" }
 else if( config.dataset == "PAD" ) { config.tracer = params.participant[-3..-1] }
 
 // Channels and pipeline values
-baseSf1 = file "/sf1"
-localDir = baseSf1 / "project" / "yai-974-aa" / "local"
+//baseSf1 = file "/sf1"
+//localDir = baseSf1 / "project" / "yai-974-aa" / "local"
 //tpl = localDir / "atlas" / "MNI152_T1_1mm.nii"
 
 participant = params.participant
@@ -342,6 +343,6 @@ process compute_metrics_tpl {
     tracer.matches("PIB|NAV")
 
     script:
-    template "compute_metric_tpl.py"
+    template "compute_metrics_tpl.py"
 }
 

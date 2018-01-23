@@ -23,7 +23,7 @@ def main():
         warn([
             "Process: petconvert",
             "  {} extension is not supported".format(ext),
-            "  Converting with mri_convert",
+            "  Automatic convert with mri_convert",
             "  This might fail, check your data",
             ])
         run_shell("mri_convert -ot nii -i {0} -o {1}".format(img, output))
