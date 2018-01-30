@@ -31,13 +31,7 @@ Please follow this [link][guillimin-doc].
 
 ## Install
 
-```
-git clone https://github.com/villeneuvelab/vlpp.git
-cd vlpp
-pip install .
-```
-
-###### Software dependencies
+#### Software dependencies
 
 - [matlab](https://www.mathworks.com/)
 - [spm](http://www.fil.ion.ucl.ac.uk/spm/)
@@ -46,18 +40,27 @@ pip install .
 - [ANTs](http://stnava.github.io/ANTs/)
 - [minctools](http://www.bic.mni.mcgill.ca/ServicesSoftware/MINC)
 - [Nextflow][nextflow]
+- graphviz
 
-### Python dependencies
+#### Python dependencies with conda
 
-The files `environment.yml` and `requirements.txt` contains the python dependencies
-
-If you use conda [conda](https://conda.io/docs/). Here is how to install the python environment:
+If you use [conda](https://conda.io/docs/). Python dependencies, nextflow and graphviz will be installed automatically.
 
 ```
 conda config --add channels conda-forge
 conda config --add channels bioconda
-conda env create -f environment.yml
+
+git clone https://github.com/villeneuvelab/vlpp.git
+cd vlpp
+
+conda env create -f environment.yml -n vlpp
+source activate vlpp
+
+#Install vlpp in edit mode
+pip install -e .
 ```
+
+After that, you should add the `pipelines` and `scripts` directories to your `PATH`.
 
 [dian]: https://www.nia.nih.gov/alzheimers/clinical-trials/dominantly-inherited-alzheimer-network-dian
 [guillimin-doc]: https://github.com/villeneuvelab/documentation/wiki/VLPP-on-guillimin

@@ -1,9 +1,11 @@
-name: vlpp
 dependencies:
+    - python=2
     - nextflow
     - graphviz
+    - future>=0.16.0
     - Jinja2>=2.9.6
     - matplotlib>=2.0.2
     - nibabel>=2.1.0
     - numpy>=1.12.1
     - pandas>=0.19.2
+    - Pillow>=5.0.0

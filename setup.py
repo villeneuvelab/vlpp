@@ -36,6 +36,6 @@ if __name__ == "__main__":
             #url=URL,
             #download_url=DOWNLOAD_URL,
             packages=[DISTNAME],
-            scripts=glob('scripts/*') + glob('pipelines/*.nf'),
+            #scripts=glob('scripts/*') + glob('pipelines/*.nf'),
             install_requires=INSTALL_REQUIRES,
             )
