@@ -59,6 +59,8 @@ class Qa(object):
                 "logDir": self.logDir,
                 "walltime": args.walltime,
                 "dev": args.dev,
+                "participant": "qa",
+                "qa": True,
                 }
 
 
@@ -74,7 +76,7 @@ class Qa(object):
         return Environment(
                 loader=FileSystemLoader(TPL_PATH),
                 trim_blocks=True,
-                ).get_template("guillimin_qsub_qa.sh")
+                ).get_template("guillimin_qsub.sh")
 
 
 def main():
