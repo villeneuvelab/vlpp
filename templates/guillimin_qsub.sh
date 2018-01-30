@@ -27,7 +27,7 @@ cd {{participant}}
 vlpp-qa.nf -resume
 
 {% else %}
-vlpp --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg -resume
+vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg -resume
 
 {% endif %}
 

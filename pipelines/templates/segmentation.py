@@ -13,7 +13,7 @@ def main():
         os.mkdir(d)
 
     tags = {
-        "anat": gzipd("${anat}"),
+        "anat": gzipd("${img}"),
         "spmDir": os.path.join("${LOCAL_VL_DIR}", "matlab_tb", "spm", "v12"),
         }
     run_matlab(os.path.join(TPL_PATH, "segmentation.m"), tags, "segmentation.m")

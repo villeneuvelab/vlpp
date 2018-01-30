@@ -22,13 +22,14 @@ class Realign(object):
         self.trim4070 = add_suffix(petPath, "trim-4070")
         self.trim5070 = add_suffix(petPath, "trim-5070")
 
-        #output
-        self.petToEstimate = add_suffix(petPath, "tmp-estimate")
-        self.pet4070 = add_suffix(petPath, "time-4070")
-        self.pet5070 = add_suffix(petPath, "time-5070")
-
         #directory
+        os.mkdir("tmp")
         os.mkdir("transform")
+
+        #output
+        self.petToEstimate = os.path.join("tmp", add_suffix(petPath, "tmp-estimate"))
+        self.pet4070 = os.path.join("tmp", add_suffix(petPath, "time-4070"))
+        self.pet5070 = os.path.join("tmp", add_suffix(petPath, "time-5070"))
 
         #transform
         self.petRealignTmp = os.path.join(

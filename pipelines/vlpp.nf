@@ -73,6 +73,7 @@ petInput = file params.pet
 freesurferDir = file params.freesurfer
 anatInput = freesurferDir / "mri" / "T1.mgz"
 atlasInput = freesurferDir / "mri" / "aparc+aseg.mgz"
+nuInput = freesurferDir / "mri" / "nu.mgz"
 
 fsRefList = []
 config.fsReferences.each() { k, v -> fsRefList << [k,v] }
@@ -107,6 +108,21 @@ process anatconvert {
 
     """
     mri_convert -ot nii -i ${img} -o ${participant}${suffix.anat}
+    """
+}
+
+process nuconvert {
+
+    publishDir "anat", mode: 'copy', overwrite: true
+
+    input:
+    file img from nuInput
+
+    output:
+    file "*" + suffix.nu into nu
+
+    """
+    mri_convert -ot nii -i ${img} -o ${participant}${suffix.nu}
     """
 }
 
@@ -147,16 +163,21 @@ process petconvert {
 realignParams = config.realign
 process realign {
 
-    publishDir "tmp", mode: 'copy', overwrite: true
+    if( realignParams.keepTmp ) {
+        publishDir workflow.launchDir, mode: 'copy', overwrite: true
+    }
+    else {
+        publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "transform/*.txt"
+    }
 
     input:
     file pet from petnii
     val dataset from config.dataset
 
     output:
-    file "*tmp-estimate.*" into petToEstimate
-    file "*time-4070.*" into pet4070ToRegister
-    file "*time-5070.*" into pet5070ToRegister
+    file "tmp/*tmp-estimate.*" into petToEstimate
+    file "tmp/*time-4070.*" into pet4070ToRegister
+    file "tmp/*time-5070.*" into pet5070ToRegister
     file "transform/*"
 
     script:
@@ -173,7 +194,7 @@ process segmentation {
     publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "*/*gz"
 
     input:
-    file anat
+    file img from nu
 
     output:
     file "mask/*roi-c1" + suffix.mask into gmSpm
