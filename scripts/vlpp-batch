@@ -134,7 +134,7 @@ class Qsub(object):
                     "/home/gonjil/project_yai",
                     "/sf1/project/yai-974-aa")
             imgName = line["img-name"]
-            pattern = imgName.replace(".gz", "")
+            pattern = imgName #.replace(".gz", "")
 
         elif self.mode == "bids":
             petDir = os.path.join(

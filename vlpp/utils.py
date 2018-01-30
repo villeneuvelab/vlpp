@@ -70,7 +70,7 @@ def run_shell(commandLine):
     return output
 
 
-def get_jinja_tpl(templatePath)
+def get_jinja_tpl(templatePath):
     path, templateName  = os.path.split(templatePath)
 
     return Environment(
@@ -80,7 +80,7 @@ def get_jinja_tpl(templatePath)
 
 
 def run_matlab(templatePath, tags, filename):
-    get_jinja_tpl(templateName).stream(**tags).dump(filename)
+    get_jinja_tpl(templatePath).stream(**tags).dump(filename)
     return run_shell("matlab -nodisplay < {0}".format(filename))
 
 
