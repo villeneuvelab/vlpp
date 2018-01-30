@@ -35,7 +35,7 @@ if ( params.containsKey('help') ) {
 }
 
 tpl = file config.tpl
-suffix = config.suffix
+//suffix = config.suffix
 
 
 println """\
@@ -55,13 +55,13 @@ Channel
     .fromPath( workflow.launchDir / ".." / "sub-*", type: 'dir' )
     .map { it -> [
         "sub": it.baseName,
-        "anat": it / "anat" / "${it.baseName}${suffix.anat}",
-        "anatTpl": it / "anat" / "${it.baseName}_space-tpl${suffix.anat}",
-        "atlas": it / "anat" / "${it.baseName}${suffix.atlas}",
-        "brainmask": it / "mask" / "${it.baseName}_roi-brain${suffix.mask}",
-        "cerebellumCortex": it / "mask" / "${it.baseName}_roi-cerebellumCortex${suffix.mask}",
-        "pet": it / "pet" / "${it.baseName}*space-anat${suffix.pet}",
-        "centiloid": it / "centiloid" / "${it.baseName}*space-tpl${suffix.pet}",
+        "anat": it / "anat" / "${it.baseName}*T1w.nii.gz",
+        "anatTpl": it / "anat" / "${it.baseName}*T1w*space-tpl.nii.gz",
+        "atlas": it / "anat" / "${it.baseName}*aparc+aseg.nii.gz",
+        "brainmask": it / "mask" / "${it.baseName}*roi-brain*mask.nii.gz",
+        "cerebellumCortex": it / "mask" / "${it.baseName}*roi-cerebellumCortex*mask.nii.gz",
+        "pet": it / "pet" / "${it.baseName}*space-anat.nii.gz",
+        "centiloid": it / "centiloid" / "${it.baseName}*space-tpl.nii.gz",
     ]}.into { subjects_T1w; subjects_tpl }
 
 

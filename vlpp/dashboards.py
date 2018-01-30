@@ -21,19 +21,19 @@ class Dashboards(object):
         participants = []
         for j in self.jsonPaths:
             participants.append(load_json(j))
-        tags["participants"] = sorted(
+        self.tags["participants"] = sorted(
                 participants, key=itemgetter('participant_id'))
 
         # Save javascript data
         self.tags["dashTags"] = dashTags
         dataJsTpl = os.path.join(TPL_PATH, "qa_dataSubjects.js")
         dataJsPath = "./data/dataSubjects_{}.js".format(_type)
-        get_jinja_tpl(dataJsTpl).stream(self.**tags).dump(dataJsPath)
+        get_jinja_tpl(dataJsTpl).stream(**self.tags).dump(dataJsPath)
 
         # Save Dashboard
         self.tags["dataSubjects"] = dataJsPath
         dashTpl = os.path.join(TPL_PATH, "qa_registrations.html")
-        htmlPath = "registration_{}.html".forat(_type)
+        htmlPath = "registration_{}.html".format(_type)
         get_jinja_tpl(dashTpl).stream(**self.tags).dump(htmlPath)
 
 
