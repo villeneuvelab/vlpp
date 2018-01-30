@@ -6,13 +6,13 @@ VLPP is builded with the [Nextflow framework][nextflow] which enables scalable a
 
 ## Usage
 
-`vlpp --pet <> --freesurfer <> --participant <> [-c <>]`
+`vlpp.nf --pet <> --freesurfer <> --participant <> [-c <>]`
 
 ###### Mandatories arguments:
 
 - `--pet`: PET file (`mnc`, `nii` or `nii.gz`)
 - `--freesurfer`: Freesurfer directory of the participant
-- `--participant`: Participant code
+- `--participant`: Participant ID
 
 ###### Optional arguments:
 
@@ -31,7 +31,11 @@ Please follow this [link][guillimin-doc].
 
 ## Install
 
-Clone this repository and add the `vlpp` and `scripts` directories to your `PATH`.
+```
+git clone https://github.com/villeneuvelab/vlpp.git
+cd vlpp
+pip install .
+```
 
 ###### Software dependencies
 
