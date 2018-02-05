@@ -189,6 +189,7 @@ process realign {
  * Segmentation
  */
 
+segmentationParams = config.segmentation
 process segmentation {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "*/*gz"

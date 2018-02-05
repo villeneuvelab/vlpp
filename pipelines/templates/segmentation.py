@@ -15,8 +15,11 @@ def main():
     tags = {
         "anat": gzipd("${img}"),
         "spmDir": os.path.join("${LOCAL_VL_DIR}", "matlab_tb", "spm", "v12"),
+        "compat": "${segmentationParams.compat}",
         }
-    run_matlab(os.path.join(TPL_PATH, "segmentation.m"), tags, "segmentation.m")
+    run_matlab(
+            os.path.join(TPL_PATH, "segmentation_suit.m"),
+            tags, "segmentation.m")
 
     for c in glob("c*nii"):
         run_shell("gzip {}".format(c))
