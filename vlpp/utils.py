@@ -81,7 +81,7 @@ def get_jinja_tpl(templatePath):
 
 def run_matlab(templatePath, tags, filename):
     get_jinja_tpl(templatePath).stream(**tags).dump(filename)
-    return run_shell("matlab -nodisplay < {0}".format(filename))
+    print(run_shell("matlab -nodisplay < {0}".format(filename)))
 
 
 def nfmap2dict(mapStr):

@@ -39,10 +39,8 @@ if [[ $EXITCODE -eq 0 ]]
 then
     rm -Rf work/
 {% if qa %}
-    tar zcvf ../qa.tar.gz assets/ data/*js data/*jpg *.html
+    cd ${PBS_O_WORKDIR}
+    tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
 {% endif %}
 fi
-
-
 {% endif %}
-cd ${PBS_O_WORKDIR}
