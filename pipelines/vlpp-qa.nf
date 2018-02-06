@@ -62,12 +62,16 @@ Channel
         "cerebellumCortex": it / "mask" / "${it.baseName}*roi-cerebellumCortex*mask.nii.gz",
         "pet": it / "pet" / "${it.baseName}*space-anat.nii.gz",
         "centiloid": it / "centiloid" / "${it.baseName}*space-tpl.nii.gz",
-    ]}.into { subjects_T1w; subjects_tpl }
+        "suit": it / "suit" / "${it.baseName}*suit.nii.gz",
+        "atlasBaker": it / "baker" / "${it.baseName}*edited-baker.nii.gz",
+        "suvrBaker": it / "baker" / "${it.baseName}*suvr.nii.gz",
+    ]}.into { subjects_T1w; subjects_suit; subjects_tpl }
 
 
 /*
  * Mosaics
  */
+
 
 process mosaics_T1w {
 
@@ -87,6 +91,26 @@ process mosaics_T1w {
     template "qa_mosaics_T1w.py"
 }
 
+
+process mosaics_suit {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    //When an input file is not found
+    errorStrategy "ignore"
+
+    input:
+    val sub from subjects_suit
+
+    output:
+    file "data/*_mosaic.jpg"
+    file "data/*.json" into participant_json_suit
+
+    script:
+    template "qa_mosaics_suit.py"
+}
+
+
 process mosaics_tpl {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
@@ -105,13 +129,16 @@ process mosaics_tpl {
     template "qa_mosaics_tpl.py"
 }
 
+
 participant_jsons = participant_json.toList()
+participant_jsons_suit = participant_json_suit.toList()
 participant_jsons_tpl = participant_json_tpl.toList()
 
 
 /*
  * Dashboards
  */
+
 
 process dashboards {
 
@@ -132,6 +159,28 @@ process dashboards {
     anat_dash(jsonPaths)
     """
 }
+
+
+process dashboards_suit {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    val participant_jsons_suit
+
+    output:
+    file "*.html"
+    file "data/*"
+
+    """
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    from vlpp.dashboards import suit_dash
+    jsonPaths = "${participant_jsons_suit}"[1:-1].split(", ")
+    suit_dash(jsonPaths)
+    """
+}
+
 
 process dashboards_tpl {
 
@@ -189,30 +238,3 @@ process assets {
         os.symlink(opj(*source), opj("assets", f[0], f[-1]))
     """
 }
-
-/*
-{
-    "mosaics": {
-        "t1": {
-        },
-        "t1seg": {
-            "cmap": "gray"
-        },
-        "pet": {
-        },
-        "petwm": {
-            "title": "PET and white matter segmentation",
-            "notes": "PET image in freesurfer native space with white matter contour"
-        },
-        "petseg": {
-            "title": "PET and aparc+aseg",
-            "notes": "PET image in freesurfer native space with aparc+aseg as overlay",
-            "cmap": "gray"
-        },
-        "suvr": {
-            "title": "SUVr",
-            "notes": "SUVr image in freesurfer native space with cerebellum contour"
-        }
-    }
-}
-*/

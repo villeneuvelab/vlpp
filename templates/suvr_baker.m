@@ -15,16 +15,15 @@ try,
         end
 
 
-        matlabbatch{1}.spm.tools.suit.normalise_dartel.subjND.gray = {'{{gray}},1'};
-        matlabbatch{1}.spm.tools.suit.normalise_dartel.subjND.white = {'{{white}},1'};
-        matlabbatch{1}.spm.tools.suit.normalise_dartel.subjND.isolation = {'{{isolation}},1'};
+        addpath('{{bakerDir}}');
+        TAU_PVC_RUNME_Create_ROIs_For_Rousset('{{atlas}}','{{pet}}','{{gmSpm}}','{{wmSpm}}','{{csfSpm}}','{{boneSpm}}','{{softSpm}}','{{atlasCereb}}',[6.5 6.5 7.5]),
 
 
-        spm_jobman('run', matlabbatch);
 
 ,catch ME,
 fprintf(2,'MATLAB code threw an exception:\n');
 fprintf(2,'%s\n',ME.message);
 if length(ME.stack) ~= 0, fprintf(2,'File:%s\nName:%s\nLine:%d\n',ME.stack.file,ME.stack.name,ME.stack.line);, end;
 end;
+
 

@@ -22,6 +22,8 @@ def main():
     atlas = glob("${sub.atlas}")[0]
     pet = glob("${sub.pet}")[0]
     cerebellumCortex = glob("${sub.cerebellumCortex}")[0]
+    atlasBaker = glob("${sub.atlasBaker}")[0]
+    suvrBaker = glob("${sub.suvrBaker}")[0]
 
     # Anat
     tag = "anat"
@@ -38,6 +40,18 @@ def main():
     # Pet
     tag = "pet"
     m = qamosaic.Mosaic(pet, mask=brainmask, contour=cerebellumCortex)
+    target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
+    m.save(target)
+
+    # SUVR Baker
+    tag = "suvrbaker"
+    m = qamosaic.Mosaic(suvrBaker, mask=brainmask)
+    target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
+    m.save(target)
+
+    # Atlas Baker
+    tag = "atlasbaker"
+    m = qamosaic.Mosaic(anat, mask=brainmask, overlay=atlasBaker, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 

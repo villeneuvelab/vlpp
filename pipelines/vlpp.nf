@@ -189,13 +189,13 @@ process realign {
  * Segmentation
  */
 
-segmentationParams = config.segmentation
 process segmentation {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "*/*gz"
 
     input:
     file img from nu
+    val spmDir from config.spmDir
 
     output:
     file "mask/*roi-c1" + suffix.mask into gmSpm
@@ -208,6 +208,26 @@ process segmentation {
     file "iy_*.nii" into tpl2anat
 
     script:
+    type = "spm12"
+    template "segmentation.py"
+}
+
+
+process segmentation_suit {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "*/*gz"
+
+    input:
+    file img from nu
+    val spmDir from config.spmDir
+
+    output:
+    //file "mask/*roi-c1" + suffix.mask into gmSuit
+    //file "mask/*roi-c2" + suffix.mask into wmSuit
+    file "suit/*" + suffix.suit into atlasCereb
+
+    script:
+    type = "suit"
     template "segmentation.py"
 }
 
@@ -328,6 +348,30 @@ process pickatlas {
 /*
  * Suvr & Centiloid
  */
+
+process suvr_baker {
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
+
+    input:
+    val bakerDir from config.bakerDir
+    file atlas
+    file pet4070 from pet4070InAnat
+    file gmSpm
+    file wmSpm
+    file csfSpm
+    file boneSpm
+    file softSpm
+    file atlasCereb
+
+    output:
+    file "baker/*"
+    file "stats/*"
+
+    script:
+    template "suvr_baker.py"
+}
+
 
 process compute_metrics_anat {
 

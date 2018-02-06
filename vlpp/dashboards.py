@@ -60,12 +60,46 @@ def anat_dash(jsonPaths):
                     "title": "PET and aparc+aseg",
                     "notes": "PET image in freesurfer native space with aparc+aseg as overlay",
                 },
+                {
+                    "tag": "suvrbaker",
+                    "title": "SUVR from Baker script",
+                    "notes": "SUVR image in freesurfer native space from Baker script",
+                },
+                {
+                    "tag": "atlasbaker",
+                    "title": "T1 and aparc+aseg edited by Baker script",
+                    "notes": "Freesufer T1 in native space with aparc+aseg edited by Baker script as overlay",
+                },
                 ],
             }
 
-    dashTags = ["anat", "atlas", "pet", "petatlas"]
+    dashTags = ["anat", "atlas", "pet", "petatlas", "suvrbaker", "atlasbaker"]
     dash = Dashboards(jsonPaths, tags)
     dash.run("T1w", dashTags)
+
+
+def suit_dash(jsonPaths):
+    tags = {
+            "infos": [
+                {
+                    "tag": "suitAnat",
+                    "title": "SUIT template",
+                    "notes": "T1w image with SUIT template overlay",
+                },
+                {
+                    "tag": "suitPet",
+                    "title": "SUIT template",
+                    "notes": "PET image in T1w space with SUIT overlay",
+                },
+                ],
+            }
+
+    dashTags = [
+            "suitAnat",
+            "suitPet",
+            ]
+    dash = Dashboards(jsonPaths, tags)
+    dash.run("suit", dashTags)
 
 
 def tpl_dash(jsonPaths):
