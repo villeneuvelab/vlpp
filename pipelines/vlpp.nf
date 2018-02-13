@@ -65,7 +65,6 @@ else if( config.dataset == "PAD" ) {
     }
     else { config.tracer = params.participant[-3..-1] }
 }
-tracer = config.tracer
 
 
 // Channels and pipeline values
@@ -371,6 +370,7 @@ process suvr_baker {
     file boneSpm
     file softSpm
     file atlasCereb
+    val tracer from config.tracer
 
     output:
     file "baker/*"

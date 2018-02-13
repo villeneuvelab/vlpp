@@ -115,12 +115,14 @@ class ImgStatsFromAtlas(object):
                 self.outputDefault, delim_whitespace=True, comment="#",
                 usecols=[4, 5, 6, 7, 8, 9], names=specData.columns.values)
         mergeData = specData.append(data)
-        mergeData.to_csv(self.output, sep="\t")
+        mergeData.to_csv(self.output, sep="\t", index=False)
 
     def compute(self):
         self.computeDefault()
         self.computeSpecial()
         self.mergeResults()
+        run_shell("rm {}".format(self.outputDefault))
+        run_shell("rm {}".format(self.outputSpecial))
 
 
 class CentiloidStats(object):

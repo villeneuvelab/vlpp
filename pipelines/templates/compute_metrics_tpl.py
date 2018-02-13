@@ -36,6 +36,7 @@ def main():
 
         rsl[0].append("{}_suvr".format(roiName))
         rsl[1].append(meanFromRoi(suvr, ctxMask))
+
         rsl[0].append("{}_centiloid".format(roiName))
         rsl[1].append(meanFromRoi(centiloid, ctxMask))
 

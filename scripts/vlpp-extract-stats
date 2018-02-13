@@ -54,40 +54,42 @@ class FetchStats(object):
     def stats_space_tpl(self):
         datas = []
 
-        pattern = '*/centiloid/*.csv'
+        pattern = '*/stats/*space-tpl.tsv'
         dataFiles = glob.glob(pattern)
 
         if dataFiles == []:
-            print("No file found with the pattern: {}".format(pattern))
+            #print("No file found with the pattern: {}".format(pattern))
             return
 
-        rsldf = pandas.read_csv(dataFiles[0])
+        rsldf = pandas.read_csv(dataFiles[0], sep="\t")
         for dataFile in dataFiles[1:]:
-            rsldf = rsldf.append(pandas.read_csv(dataFile))
+            rsldf = rsldf.append(pandas.read_csv(dataFile, sep="\t"))
 
         rsldf.sort_values(by=["participant_id"], inplace=True)
         rsldf.set_index("participant_id", inplace=True)
 
+        post = dataFiles[0].split("_time")[-1]
         output = os.path.join(
-                self.outputDir, "group_space-tpl_roi-ctx.csv")
+                self.outputDir, "group_time{}".format(post))
 
         self._save(rsldf, output)
+        return
 
 
-    def stats_space_anat(self, ref):
+    def stats_space_anat(self, ref, t):
         subjects = []
         datas = []
 
-        pattern = '*/stats/*_ref-{0}_suvr.csv'.format(ref)
+        pattern = '*/stats/*time-{0}*ref-{1}*.tsv'.format(t, ref)
         dataFiles = glob.glob(pattern)
 
         if dataFiles == []:
-            print("No file found with the pattern: {}".format(pattern))
+            #print("No file found with the pattern: {}".format(pattern))
             return
 
         for dataFile in dataFiles:
             subjects.append(dataFile.split("/")[-3])
-            datas.append(pandas.read_csv(dataFile))
+            datas.append(pandas.read_csv(dataFile, sep="\t"))
 
         df = pandas.concat(datas, keys=subjects)
         meandf = df.get(['StructName', 'mean'])
@@ -101,10 +103,12 @@ class FetchStats(object):
         rsldf = rsldf.sort_index()
         rsldf.index.name = "participant_id"
 
+        post = dataFiles[0].split("_time")[-1]
         output = os.path.join(
-                self.outputDir, "group_space-anat_ref-{}_suvr.csv".format(ref))
+                self.outputDir, "group_time{}".format(post))
 
         self._save(rsldf, output)
+        return
 
     def _save(self, rsldf, output):
         if os.path.exists(output):
@@ -118,9 +122,7 @@ class FetchStats(object):
 
 
 def main():
-    #args = get_arguments()
-    #ref = args.ref
-    #dataType = args.data
+    args = get_arguments()
 
     outputDir = os.path.join(os.getcwd(), 'stats')
     if not os.path.exists(outputDir):
@@ -128,14 +130,16 @@ def main():
 
     fetcher = FetchStats(outputDir)
 
-    ANAT_ROIS = [
+    ANAT_REFS = [
             "cerebellumCortex",
             "wholeCerebellum",
-            "whitematter",
+            "infcereg",
             ]
 
-    for ref in ANAT_ROIS:
-        fetcher.stats_space_anat(ref)
+    for ref in ANAT_REFS:
+        for t in ["4070", "5070"]:
+            fetcher.stats_space_anat(ref, t)
+
     fetcher.stats_space_tpl()
 
 
