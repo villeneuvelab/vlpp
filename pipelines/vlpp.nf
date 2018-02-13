@@ -65,6 +65,7 @@ else if( config.dataset == "PAD" ) {
     }
     else { config.tracer = params.participant[-3..-1] }
 }
+tracer = config.tracer
 
 
 // Channels and pipeline values
@@ -376,7 +377,7 @@ process suvr_baker {
     file "stats/*"
 
     when:
-    tracer.matches("TAU")
+    tracer == "TAU"
 
     script:
     template "suvr_baker.py"
