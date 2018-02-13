@@ -58,7 +58,14 @@ if ( params.containsKey('help') ) {
 
 //tracer
 if( config.dataset == "DIAN" ) { config.tracer = "PIB" }
-else if( config.dataset == "PAD" ) { config.tracer = params.participant[-3..-1] }
+else if( config.tracer ) {}
+else if( config.dataset == "PAD" ) {
+    if( params.participant[-1] == "2" ) {
+        config.tracer = params.participant[-4..-2]
+    }
+    else { config.tracer = params.participant[-3..-1] }
+}
+
 
 // Channels and pipeline values
 //baseSf1 = file "/sf1"
@@ -367,6 +374,9 @@ process suvr_baker {
     output:
     file "baker/*"
     file "stats/*"
+
+    when:
+    tracer.matches("TAU")
 
     script:
     template "suvr_baker.py"
