@@ -23,11 +23,16 @@ def save_json(filename, data):
         json.dump(data, f, indent=4)
 
 
-def add_suffix(path, suffix):
-    root, ext = splitext_(path)
+def add_suffix(path, suffix, ext=None):
+    root, _ext = splitext_(os.path.basename(path))
+
     if not suffix.startswith("_"):
         suffix = "_" + suffix
-    return root + suffix + ext
+
+    if ext is not None:
+        return root + suffix + ext
+    else:
+        return root + suffix + _ext
 
 
 def splitext_(path):
