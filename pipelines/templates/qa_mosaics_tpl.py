@@ -19,9 +19,15 @@ def main():
     participant_id = "${sub.sub}"
 
     # Images Path
-    tpl = "${tpl}"
-    anattpl = glob("${sub.anatTpl}")[0]
-    centtpl = glob("${sub.centiloid}")[0]
+    try: tpl = "${tpl}"
+    except: tpl = None
+
+    try: anattpl = glob("${sub.anatTpl}")[0]
+    except: anattpl = None
+
+    try: centtpl = glob("${sub.centiloid}")[0]
+    except: centtpl = None
+
 
     """
     # Anat template

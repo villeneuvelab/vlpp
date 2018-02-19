@@ -17,13 +17,26 @@ def main():
     participant_id = "${sub.sub}"
 
     # Images Path
-    anat = glob("${sub.anat}")[0]
-    brainmask = glob("${sub.brainmask}")[0]
-    atlas = glob("${sub.atlas}")[0]
-    pet = glob("${sub.pet}")[0]
-    cerebellumCortex = glob("${sub.cerebellumCortex}")[0]
-    atlasBaker = glob("${sub.atlasBaker}")[0]
-    suvrBaker = glob("${sub.suvrBaker}")[0]
+    try: anat = glob("${sub.anat}")[0]
+    except: anat = None
+
+    try: brainmask = glob("${sub.brainmask}")[0]
+    except: brainmask = None
+
+    try: atlas = glob("${sub.atlas}")[0]
+    except: atlas = None
+
+    try: pet = glob("${sub.pet}")[0]
+    except: pet = None
+
+    try: cerebellumCortex = glob("${sub.cerebellumCortex}")[0]
+    except: cerebellumCortex = None
+
+    try: atlasBaker = glob("${sub.atlasBaker}")[0]
+    except: atlasBaker = None
+
+    try: suvrBaker = glob("${sub.suvrBaker}")[0]
+    except: suvrBaker = None
 
     # Anat
     tag = "anat"

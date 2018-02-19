@@ -24,7 +24,7 @@ cd {{participant}}
 
 {% if qa %}
 
-vlpp-qa.nf -resume
+vlpp-qa.nf -profile qa -resume
 
 {% else %}
 

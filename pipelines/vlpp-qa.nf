@@ -77,9 +77,6 @@ process mosaics_T1w {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
-    //When an input file is not found
-    errorStrategy "ignore"
-
     input:
     val sub from subjects_T1w
 
@@ -96,9 +93,6 @@ process mosaics_suit {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
-    //When an input file is not found
-    errorStrategy "ignore"
-
     input:
     val sub from subjects_suit
 
@@ -114,9 +108,6 @@ process mosaics_suit {
 process mosaics_tpl {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
-
-    //When an input file is not found
-    errorStrategy "ignore"
 
     input:
     val sub from subjects_tpl

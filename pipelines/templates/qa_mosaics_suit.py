@@ -17,9 +17,14 @@ def main():
     participant_id = "${sub.sub}"
 
     # Images Path
-    anat = glob("${sub.anat}")[0]
-    pet = glob("${sub.pet}")[0]
-    suit = glob("${sub.suit}")[0]
+    try: anat = glob("${sub.anat}")[0]
+    except: anat = None
+
+    try: pet = glob("${sub.pet}")[0]
+    except: pet = None
+
+    try: suit = glob("${sub.suit}")[0]
+    except: suit = None
 
     # Anat
     tag = "suitAnat"

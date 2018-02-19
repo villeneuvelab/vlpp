@@ -31,7 +31,7 @@ def get_arguments():
 
     parser.add_argument(
             '-w', '--walltime',
-            required=False, default="1:00:00",
+            required=False,
             help='Set walltime',
             )
 
@@ -57,11 +57,20 @@ class Qa(object):
         self.tags = {
                 "RAPid": args.rapid,
                 "logDir": self.logDir,
-                "walltime": args.walltime,
+                "walltime": self._walltime(args.walltime),
                 "dev": args.dev,
                 "participant": "qa",
                 "qa": True,
                 }
+
+
+    def _walltime(self, walltime):
+        if walltime:
+            return walltime
+        else:
+            n = len(os.listdir(os.path.curdir))
+            hour = n // 60 + 1
+            return "{}:00:00".format(str(hour))
 
 
     def run(self):
