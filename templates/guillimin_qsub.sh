@@ -9,7 +9,6 @@
 
 module purge
 module restore
-export LOCAL_VL_DIR=/sf1/project/yai-974-aa/local
 module use /sf1/project/yai-974-aa/local/modulefiles
 module load VilleneuveLab
 

@@ -150,6 +150,7 @@ process atlasconvert {
 
 process petconvert {
 
+    publishDir "orig", mode: 'copy', overwrite: true
     echo true
 
     input:
