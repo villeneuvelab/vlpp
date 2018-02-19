@@ -16,7 +16,7 @@ from setuptools import setup
 
 DISTNAME = "vlpp"
 DESCRIPTION = description
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 AUTHOR = "Christophe Bedetti"
 AUTHOR_EMAIL = "christophe.bedetti@umontreal.ca"
 #URL = "https://github.com/"
