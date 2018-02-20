@@ -307,6 +307,7 @@ process apply_pet2anat {
     output:
     file "pet/*space-anat*" into pet4070InAnat
     file "centiloid/*space-anat*" into pet5070InAnat
+    file "tmp/*space-anat*"
 
     script:
     template "apply_pet2anat.py"

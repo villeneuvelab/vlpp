@@ -60,7 +60,7 @@ Channel
         "atlas": it / "anat" / "${it.baseName}*aparc+aseg.nii.gz",
         "brainmask": it / "mask" / "${it.baseName}*roi-brain*mask.nii.gz",
         "cerebellumCortex": it / "mask" / "${it.baseName}*roi-cerebellumCortex*mask.nii.gz",
-        "pet": it / "pet" / "${it.baseName}*space-anat.nii.gz",
+        "pet": it / "tmp" / "${it.baseName}*space-anat.nii.gz",
         "centiloid": it / "centiloid" / "${it.baseName}*space-tpl.nii.gz",
         "suit": it / "suit" / "${it.baseName}*suit.nii.gz",
         "atlasBaker": it / "baker" / "${it.baseName}*edited-baker.nii.gz",
@@ -76,6 +76,7 @@ Channel
 process mosaics_T1w {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
+    errorStrategy 'ignore'
 
     input:
     val sub from subjects_T1w
@@ -92,6 +93,7 @@ process mosaics_T1w {
 process mosaics_suit {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
+    errorStrategy 'ignore'
 
     input:
     val sub from subjects_suit
@@ -108,6 +110,7 @@ process mosaics_suit {
 process mosaics_tpl {
 
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
+    errorStrategy 'ignore'
 
     input:
     val sub from subjects_tpl

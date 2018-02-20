@@ -10,6 +10,7 @@ from vlpp.registration import applyWarpImageMultiTransform
 def main():
     os.mkdir("pet")
     os.mkdir("centiloid")
+    os.mkdir("tmp")
 
     pet4070 = "${pet4070}"
     pet5070 = "${pet5070}" #centiloid
@@ -21,11 +22,15 @@ def main():
 
     petParams = nfmap2dict("${pet2anatPetParams}")
     centiloidParams = nfmap2dict("${pet2anatCentiloidParams}")
+    tmpParams = {
+            "mask": "null",
+            "fwhm": 6,
+            }
 
     for pet, _dir, params in zip(
-            [pet4070, pet5070],
-            ["pet", "centiloid"],
-            [petParams, centiloidParams],
+            [pet4070, pet5070, pet4070],
+            ["pet", "centiloid", "tmp"],
+            [petParams, centiloidParams, tmpParams],
             ):
 
         output = os.path.join(_dir, add_suffix(pet, "space-anat"))

@@ -6,11 +6,11 @@ from glob import glob
 from .utils import run_shell, gzipd, run_matlab, TPL_PATH
 
 
-def applyWarpImageMultiTransform(input, ref, mat, output=None):
+def applyWarpImageMultiTransform(_input, ref, mat, output=None):
     if not output:
         output = "tmp.nii.gz"
     cmd = "WarpImageMultiTransform 3 {0} {1} {2} -R {3} --use-BSpline"
-    run_shell(cmd.format(input, output, mat, ref))
+    run_shell(cmd.format(_input, output, mat, ref))
     return output
 
 
