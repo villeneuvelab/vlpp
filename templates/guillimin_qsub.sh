@@ -19,7 +19,24 @@ source activate vlpp-dev
 
 {% endif %}
 
-cd ${PBS_O_WORKDIR}
+
+# Checking if PBS_O_WORKDIR exists
+# If not, write some basic log in the HOME directory and exit
+if [ -d "${PBS_O_WORKDIR}" ]
+then
+    cd ${PBS_O_WORKDIR}
+else
+    _id=$(echo ${PBS_JOBID} | cut -d"." -f1)
+    _logFile=${HOME}/vlpp_{{participant}}.e${_id}
+    echo "HOSTNAME="${HOSTNAME} > ${_logFile}
+    env | grep PBS >> ${_logFile}
+    date >> ${_logFile}
+    echo >> ${_logFile}
+    echo "PBS_O_WORKDIR does not exists" >> ${_logFile}
+    exit 1
+fi
+
+
 mkdir -p {{participant}}
 cd {{participant}}
 
