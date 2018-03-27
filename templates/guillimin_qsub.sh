@@ -42,23 +42,21 @@ cd {{participant}}
 
 {% if qa %}
 
-vlpp-qa.nf -profile qa -resume
+vlpp-qa.nf -profile qa
+cd ${PBS_O_WORKDIR}
+tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
 
 {% else %}
 
-vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg -resume
+vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg
 
 {% endif %}
-{% if not dev %}
+{% if removingWorkingDir %}
 
 # Removing work directory if pipeline success
 EXITCODE=$?
 if [[ $EXITCODE -eq 0 ]]
 then
     rm -Rf work/
-{% if qa %}
-    cd ${PBS_O_WORKDIR}
-    tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
-{% endif %}
 fi
 {% endif %}

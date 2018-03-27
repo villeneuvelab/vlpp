@@ -72,6 +72,7 @@ else if( config.dataset == "PAD" ) {
 //localDir = baseSf1 / "project" / "yai-974-aa" / "local"
 //tpl = localDir / "atlas" / "MNI152_T1_1mm.nii"
 
+config = config
 participant = params.participant
 suffix = config.suffix
 
@@ -171,12 +172,16 @@ process petconvert {
 realignParams = config.realign
 process realign {
 
+    /*
     if( realignParams.keepTmp ) {
         publishDir workflow.launchDir, mode: 'copy', overwrite: true
     }
     else {
         publishDir workflow.launchDir, mode: 'copy', overwrite: true, pattern: "transform/*.txt"
     }
+    */
+
+    publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
     file pet from petnii
@@ -268,6 +273,7 @@ process brainmask {
  * Registrations
  */
 
+transitional = config.pet2anat.transitional
 process estimate_pet2anat {
 
     publishDir "transform", mode: 'copy', overwrite: true
@@ -275,7 +281,7 @@ process estimate_pet2anat {
     // ANTSImageRegistrationOptimizer error
     //https://sourceforge.net/p/advants/discussion/840260/thread/7cf6ba92/
     //Just ignore the error
-    errorStrategy "ignore"
+    //errorStrategy "ignore"
 
     input:
     file anat

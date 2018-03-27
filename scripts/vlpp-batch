@@ -75,6 +75,11 @@ def get_arguments():
             )
 
     parser.add_argument(
+            '--removing_working_dir',
+            required=False, action="store_true",
+            )
+
+    parser.add_argument(
             '--debug',
             required=False, action="store_true",
             )
@@ -117,6 +122,7 @@ class Qsub(object):
                 "logDir": self.logDir,
                 "walltime": args.walltime,
                 "dev": args.dev,
+                "removingWorkingDir": args.removing_working_dir,
                 }
 
 

@@ -27,13 +27,13 @@ def seg_spm12(img, spmDir):
         shutil.copy(src, dst)
         run_shell("gzip {}".format(dst))
 
-    anat2tpl = "transform/{}_${suffix.anat2tpl}"
+    anat2tpl = "transform/{}${suffix.anat2tpl}".format(PARTICIPANT)
     shutil.copy(glob("y_*.nii")[0], anat2tpl)
-    run_shell("gzip {}".format(PARTICIPANT, anat2tpl))
+    run_shell("gzip {}".format(anat2tpl))
 
-    tpl2anat = "transform/{}_${suffix.tpl2anat}"
+    tpl2anat = "transform/{}${suffix.tpl2anat}".format(PARTICIPANT)
     shutil.copy(glob("iy_*.nii")[0], tpl2anat)
-    run_shell("gzip {}".format(PARTICIPANT, tpl2anat))
+    run_shell("gzip {}".format(tpl2anat))
 
 
 def seg_suit(img, spmDir):

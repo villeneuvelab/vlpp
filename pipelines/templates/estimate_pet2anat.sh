@@ -1,12 +1,20 @@
 #!/bin/bash
 
-antsaffine.sh 3 ${anat} ${pet} pet2anat_
 
-#fslmaths {anat} -mul {brainMask} anat_masked.nii.gz
-#ANTS 3 -m MI[anat_masked.nii.gz,${pet},1,32] -o pet2anat_ \
-    #-i 0 --use-Histogram-Matching \
-    #--number-of-affine-iterations 10000x10000x10000x10000x10000 \
-    #--rigid-affine false
+if [[ "${transitional}" == "false" ]]
 
-ln -s *Affine.txt ${participant}${suffix.pet2anat}
+then
+    antsaffine.sh 3 ${anat} ${pet} pet2anat_
+    ln -s *Affine.txt ${participant}${suffix.pet2anat}
+
+else
+    transitionalPet="${transitional}/tmp/*tmp-estimate.nii.gz"
+    #transitionalAff="${transitional}/transform/*${suffix.pet2anat}"
+
+    antsaffine.sh 3 \${transitionalPet} ${pet} pet2transitional_
+    ln -s *Affine.txt ${participant}${suffix.pet2anat}
+    #antsaffine.sh 3 \${transitionalPet} ${pet} pet2transitional_
+    #ANTSAverage3DAffine.sh ${participant}${suffix.pet2anat} pet2transitional_Affine.txt \${transitionalAff}
+
+fi
 

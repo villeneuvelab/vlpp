@@ -3,11 +3,14 @@
 
 
 import os
+from glob import glob
 from vlpp.utils import add_suffix, nfmap2dict, warn, run_shell
 from vlpp.registration import applyWarpImageMultiTransform
 
 
 def main():
+    transitional = "${transitional}"
+
     os.mkdir("pet")
     os.mkdir("centiloid")
     os.mkdir("tmp")
@@ -36,7 +39,18 @@ def main():
         output = os.path.join(_dir, add_suffix(pet, "space-anat"))
 
         # Apply transform
-        petTemp = applyWarpImageMultiTransform(pet, anat, pet2anat)
+        if transitional != "false":
+            transitPet = glob(
+                    "{}/tmp/*tmp-estimate.nii.gz".format(transitional))[0]
+            transit2anat = glob(
+                    "{}/transform/*${suffix.pet2anat}".format(transitional))[0]
+            petInTransit = applyWarpImageMultiTransform(
+                    pet, transitPet, pet2anat, "petInTransit.nii.gz")
+            petTemp = applyWarpImageMultiTransform(
+                    petInTransit, anat, transit2anat)
+
+        else:
+            petTemp = applyWarpImageMultiTransform(pet, anat, pet2anat)
 
         # Masking step
         mask = params["mask"]
