@@ -123,10 +123,12 @@ class Realign(object):
             sys.exit()
 
 
-    def _tmean_and_smooth(self, input, output, smooth=True):
+    def _tmean_and_smooth(self, input, output, smooth=True, nan=False):
         # Temporal average
-        #cmd = "fslmaths {0} -nan -Tmean tmp.nii.gz".format(input)
-        cmd = "fslmaths {0} -Tmean tmp.nii.gz"
+        if nan:
+            cmd = "fslmaths {0} -nan -Tmean tmp.nii.gz".format(input)
+        else:
+            cmd = "fslmaths {0} -Tmean tmp.nii.gz"
         run_shell(cmd.format(input))
 
         # Smoothing
@@ -139,7 +141,7 @@ class Realign(object):
 
 
     def _prepareOutputFrom(self, orig):
-        self._tmean_and_smooth(orig, self.petToEstimate)
+        self._tmean_and_smooth(orig, self.petToEstimate, nan=True)
         self._tmean_and_smooth(orig, self.pet4070, False)
 
         cmd = "fslroi {0} {1} 2 -1"
