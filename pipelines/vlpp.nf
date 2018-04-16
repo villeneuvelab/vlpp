@@ -239,6 +239,9 @@ process segmentation_suit {
     //file "mask/*roi-c2" + suffix.mask into wmSuit
     file "suit/*" + suffix.suit into atlasCereb
 
+    when:
+    !config.segmentation_suit.ignore
+
     script:
     type = "suit"
     template "segmentation.py"
