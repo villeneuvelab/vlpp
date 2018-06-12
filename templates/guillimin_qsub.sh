@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=12
+#PBS -l nodes=1:ppn=16
 #PBS -l walltime={{walltime}}
 #PBS -A {{RAPid}}
 #PBS -o {{logDir}}
@@ -32,7 +32,7 @@ else
     env | grep PBS >> ${_logFile}
     date >> ${_logFile}
     echo >> ${_logFile}
-    echo "PBS_O_WORKDIR does not exists" >> ${_logFile}
+    echo "PBS_O_WORKDIR does not exist" >> ${_logFile}
     exit 1
 fi
 
