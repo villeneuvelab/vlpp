@@ -51,7 +51,7 @@ class FetchStats(object):
     def __init__(self, outputDir):
         self.outputDir = outputDir
 
-    def stats_space_tpl(self):
+    def means_space_tpl(self):
         datas = []
 
         pattern = '*/stats/*space-tpl.tsv'
@@ -76,7 +76,7 @@ class FetchStats(object):
         return
 
 
-    def stats_space_anat(self, ref, t):
+    def _stats_space_anat(self, ref, t, metric):
         subjects = []
         datas = []
 
@@ -92,12 +92,12 @@ class FetchStats(object):
             datas.append(pandas.read_csv(dataFile, sep="\t"))
 
         df = pandas.concat(datas, keys=subjects)
-        meandf = df.get(['StructName', 'mean'])
+        statsdf = df.get(['StructName', metric])
 
         rsldf = pandas.DataFrame()
-        for struct in meandf['StructName'].xs(subjects[0]):
-            tempdf = meandf[meandf['StructName'] == struct]
-            tempdf = tempdf.rename(columns={'mean':struct}).reset_index(level=1)
+        for struct in statsdf['StructName'].xs(subjects[0]):
+            tempdf = statsdf[statsdf['StructName'] == struct]
+            tempdf = tempdf.rename(columns={metric:struct}).reset_index(level=1)
             rsldf[struct] = tempdf[struct]
 
         rsldf = rsldf.sort_index()
@@ -107,7 +107,18 @@ class FetchStats(object):
         output = os.path.join(
                 self.outputDir, "group_time{}".format(post))
 
+        if metric == "Volume_mm3":
+            output = os.path.join(self.outputDir, "group_space-anat_volumes.tsv")
+
         self._save(rsldf, output)
+        return
+
+    def means_space_anat(self, ref, t):
+        self._stats_space_anat(ref, t, "Mean")
+        return
+
+    def volumes_space_anat(self, ref, t):
+        self._stats_space_anat(ref, t, "Volume_mm3")
         return
 
     def _save(self, rsldf, output):
@@ -138,9 +149,10 @@ def main():
 
     for ref in ANAT_REFS:
         for t in ["4070", "5070"]:
-            fetcher.stats_space_anat(ref, t)
+            fetcher.means_space_anat(ref, t)
 
-    fetcher.stats_space_tpl()
+    fetcher.means_space_tpl()
+    fetcher.volumes_space_anat(ANAT_REFS[0], "4070")
 
 
 if __name__ == '__main__':
