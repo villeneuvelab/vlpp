@@ -106,47 +106,65 @@ println """\
 
 process anatconvert {
 
-    publishDir "anat", mode: 'copy', overwrite: true
+    //publishDir "anat", mode: 'copy', overwrite: true
 
     input:
     file img from anatInput
 
     output:
-    file "*" + suffix.anat into anat
+    file "*" + suffix.anat into anatInputNii
 
     """
-    mri_convert -ot nii -i ${img} -o ${participant}${suffix.anat}
+    mri_convert -ot nii -i ${img} -o ${participant}_input${suffix.anat}
     """
 }
 
 process nuconvert {
 
-    publishDir "anat", mode: 'copy', overwrite: true
+    //publishDir "anat", mode: 'copy', overwrite: true
 
     input:
     file img from nuInput
 
     output:
-    file "*" + suffix.nu into nu
+    file "*" + suffix.nu into nuInputNii
 
     """
-    mri_convert -ot nii -i ${img} -o ${participant}${suffix.nu}
+    mri_convert -ot nii -i ${img} -o ${participant}_input${suffix.nu}
     """
 }
 
 process atlasconvert {
 
-    publishDir "anat", mode: 'copy', overwrite: true
+    //publishDir "anat", mode: 'copy', overwrite: true
 
     input:
     file img from atlasInput
 
     output:
-    file "*" + suffix.atlas into atlas
+    file "*" + suffix.atlas into atlasInputNii
 
     """
-    mri_convert -ot nii -i ${img} -o ${participant}${suffix.atlas}
+    mri_convert -ot nii -i ${img} -o ${participant}_input${suffix.atlas}
     """
+}
+
+process reorient {
+
+    publishDir "anat", mode: 'copy', overwrite: true
+
+    input:
+    file anatInputNii
+    file nuInputNii
+    file atlasInputNii
+
+    output:
+    file "*" + suffix.anat into anat
+    file "*" + suffix.nu into nu
+    file "*" + suffix.atlas into atlas
+
+    script:
+    template "reorient.py"
 }
 
 process petconvert {
