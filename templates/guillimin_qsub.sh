@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=16
+#PBS -l nodes=1:ppn=32:hw
 #PBS -l walltime={{walltime}}
 #PBS -A {{RAPid}}
 #PBS -o {{logDir}}
@@ -7,15 +7,20 @@
 #PBS -N vlpp_{{participant}}
 
 
-module purge
-module restore
-module use /sf1/project/yai-974-aa/local/modulefiles
+source /software/soft.computecanada.ca.sh
+export VL_QUARANTINE_DIR="/sf1/project/yai-974-aa/quarantine"
+module use ${VL_QUARANTINE_DIR}/modulefiles
 module load VilleneuveLab
 
 {% if dev %}
 
 module load vlpp/dev
-source activate vlpp-dev
+source ${VL_QUARANTINE_DIR}/python_virtualenv/vlpp-dev/bin/activate
+
+{% else %}
+
+module load vlpp/prod
+source ${VL_QUARANTINE_DIR}/python_virtualenv/vlpp/bin/activate
 
 {% endif %}
 
