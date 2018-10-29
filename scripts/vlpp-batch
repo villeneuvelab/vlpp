@@ -53,13 +53,13 @@ def get_arguments():
     parser.add_argument(
             '-w', '--walltime',
             required=False, default="1:30:00",
-            help='Set walltime',
+            help='Set walltime, default="1:30:00"',
             )
 
     parser.add_argument(
             '--pet_pattern',
             required=False, default="*[nii.gz|gz|mnc]",
-            help='Set pattern to match pet file',
+            help='Set pattern to match pet file, default="*[nii.gz|gz|mnc]"',
             )
 
     parser.add_argument(
