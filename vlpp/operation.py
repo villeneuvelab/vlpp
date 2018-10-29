@@ -5,6 +5,7 @@ import csv
 import pandas
 import nibabel as nib
 import numpy as np
+from functools import reduce
 from .utils import run_shell
 
 
