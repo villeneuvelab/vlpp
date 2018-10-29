@@ -48,7 +48,7 @@ tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
 
 {% else %}
 
-vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg
+vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} -c ../code/config.cfg -resume
 
 {% endif %}
 {% if removingWorkingDir %}
