@@ -224,7 +224,7 @@ process assets {
         #['dashboards', 'assets', 'js', 'keen-analytics.js'],
         ]
     for f in assetsFiles:
-        source = [os.environ["LOCAL_VL_DIR"]] + f
+        source = [os.environ["VL_QUARANTINE_DIR"]] + f
         try:
             os.mkdir(opj("assets", f[0]))
         except:
