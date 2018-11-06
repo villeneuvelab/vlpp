@@ -14,6 +14,47 @@ def applyWarpImageMultiTransform(_input, ref, mat, output=None):
     return output
 
 
+def estimatePet2Anat(pet, anat, output=None,
+        mode="estimate", other=None, tag=None):
+
+    def touch(fname, times=None):
+        with open(fname, 'a'):
+            os.utime(fname, times)
+
+    if not output:
+        output = "tmp.nii.gz"
+
+    tags = {
+            "ref": gzipd(anat),
+            "source": gzipd(pet),
+            "mode": mode,
+            }
+
+    if mode == "estimate":
+        run_matlab(os.path.join(TPL_PATH, "estimate_pet2anat.m"), tags,
+                "estimate_pet2anat.m")
+
+        os.remove(tags["ref"])
+        os.remove(tags["source"])
+        touch(output)
+
+    elif mode == "estwrite":
+        tags["nbVol"] = 1
+        tags["other"] = gzipd(other)
+
+        run_matlab(os.path.join(TPL_PATH, "estimate_pet2anat.m"), tags,
+                "apply_pet2anat_{}.m".format(tag))
+
+        os.remove(tags["ref"])
+        os.remove(tags["source"])
+        os.remove("coreg_" + tags["source"])
+        rsl = glob("coreg_*.nii")[0]
+        run_shell("gzip {}".format(rsl))
+        os.rename(rsl+".gz", output)
+
+    return output
+
+
 def applyAnat2Tpl(input, warp, interp, tag, output):
 
     tags = {

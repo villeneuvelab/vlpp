@@ -149,7 +149,7 @@ process atlasconvert {
     """
 }
 
-process reorient {
+process reorient_anat {
 
     publishDir "anat", mode: 'copy', overwrite: true
 
@@ -164,24 +164,37 @@ process reorient {
     file "*" + suffix.atlas into atlas
 
     script:
-    template "reorient.py"
+    template "reorient_anat.py"
 }
 
 process petconvert {
 
-    publishDir "orig", mode: 'copy', overwrite: true
+    //publishDir "orig", mode: 'copy', overwrite: true
     echo true
 
     input:
     file img from petInput
 
     output:
-    file "*" + suffix.pet into petnii
+    file "*" + suffix.pet into petInputNii
 
     script:
     template "petconvert.py"
 }
 
+process reorient_pet {
+
+    publishDir "orig", mode: 'copy', overwrite: true
+
+    input:
+    file petInputNii
+
+    output:
+    file "*" + suffix.pet into petnii
+
+    script:
+    template "reorient_pet.py"
+}
 
 /*
  *  Realign
@@ -310,10 +323,19 @@ process estimate_pet2anat {
 
     output:
     file "*" + suffix.pet2anat into pet2anat
+    file "*.ps" optional true into pet2anat_spm_ps
 
     script:
-    template "estimate_pet2anat.sh"
+    if( config.pet2anat.mode == "ants" )
+        template "estimate_pet2anat_ants.sh"
+
+    else if( config.pet2anat.mode == "spm" )
+        template "estimate_pet2anat_spm.py"
+
+    else
+        error "Invalid pet2anat mode: ${config.pet2anat.mode}"
 }
+
 
 pet2anatPetParams = config.pet2anat.pet
 pet2anatCentiloidParams = config.pet2anat.centiloid
@@ -324,6 +346,7 @@ process apply_pet2anat {
     publishDir workflow.launchDir, mode: 'copy', overwrite: true
 
     input:
+    file petToEstimate
     file pet4070 from pet4070ToRegister
     file pet5070 from pet5070ToRegister
     file anat

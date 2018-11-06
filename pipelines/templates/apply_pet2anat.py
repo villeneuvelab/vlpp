@@ -5,11 +5,12 @@
 import os
 from glob import glob
 from vlpp.utils import add_suffix, nfmap2dict, warn, run_shell
-from vlpp.registration import applyWarpImageMultiTransform
+from vlpp.registration import applyWarpImageMultiTransform, estimatePet2Anat
 
 
 def main():
     transitional = "${transitional}"
+    mode = "${config.pet2anat.mode}"
 
     os.mkdir("pet")
     os.mkdir("centiloid")
@@ -50,7 +51,12 @@ def main():
                     petInTransit, anat, transit2anat)
 
         else:
-            petTemp = applyWarpImageMultiTransform(pet, anat, pet2anat)
+            if mode == "ants":
+                petTemp = applyWarpImageMultiTransform(pet, anat, pet2anat)
+            elif mode == "spm":
+                petToEstimate = "${petToEstimate}"
+                petTemp = estimatePet2Anat(
+                        petToEstimate, anat, mode="estwrite", other=pet, tag=_dir)
 
         # Masking step
         mask = params["mask"]

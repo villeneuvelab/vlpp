@@ -8,7 +8,7 @@ from vlpp.utils import splitext_, run_shell, warn
 def main():
     img = "${img}"
     _, ext = splitext_(img)
-    output = "${participant}${suffix.pet}"
+    output = "${participant}_input${suffix.pet}"
 
     if ext == ".mnc":
         run_shell("mnc2nii -nii -short {0} petconvert.nii".format(img))

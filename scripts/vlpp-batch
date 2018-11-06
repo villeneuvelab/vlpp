@@ -52,8 +52,8 @@ def get_arguments():
 
     parser.add_argument(
             '-w', '--walltime',
-            required=False, default="1:30:00",
-            help='Set walltime, default="1:30:00"',
+            required=False, default="1:00:00",
+            help='Set walltime, default="1:00:00"',
             )
 
     parser.add_argument(
