@@ -18,7 +18,7 @@ def main():
     tags = {
             "pet": dst,
             }
-    if "${config.set_origin_to_centerOfMass}" != "false":
+    if "${config.set_origin_to_centerOfMass_pet}" != "false":
         run_matlab(
                 os.path.join(TPL_PATH, "set_origin_to_centerOfMass_pet.m"),
                 tags, "set_origin_to_centerOfMass.m")

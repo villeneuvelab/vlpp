@@ -26,7 +26,7 @@ def main():
             "nu": dsts[1],
             "atlas": dsts[2],
             }
-    if "${config.set_origin_to_centerOfMass}" != "false":
+    if "${config.set_origin_to_centerOfMass_anat}" != "false":
         run_matlab(
                 os.path.join(TPL_PATH, "set_origin_to_centerOfMass_anat.m"),
                 tags, "set_origin_to_centerOfMass.m")
