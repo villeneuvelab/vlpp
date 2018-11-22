@@ -42,11 +42,11 @@ def splitext_(path):
     return os.path.splitext(path)
 
 
-def gzipd(path):
+def gzipd(path, copy=False):
     root, ext = splitext_(path)
 
     source = path
-    if os.path.islink(path):
+    if os.path.islink(path) or copy:
         source = root + "_copy"  + ext
         shutil.copy(path, source)
 

@@ -21,7 +21,9 @@ try,
         % This script comes from VBM8 toolbox, modified by petpve12 toolbox
         % and modified to fit this pipeline
 
-        pet = spm_vol('{{pet}},1');
+        pet = spm_vol('{{petToEstimate}},1');
+        pet4070 = spm_vol('{{pet4070}},1');
+        pet5070 = spm_vol('{{pet5070}},1');
 
         % pre-estimated COM of MNI template
         com_reference = [0 -20 -30];
@@ -43,6 +45,8 @@ try,
         Affine(1:3,4) = (com - com_reference)';
 
         spm_get_space(pet.fname,Affine\M);
+        spm_get_space(pet4070.fname,Affine\M);
+        spm_get_space(pet5070.fname,Affine\M);
 
 ,catch ME,
 fprintf(2,'MATLAB code threw an exception:\n');

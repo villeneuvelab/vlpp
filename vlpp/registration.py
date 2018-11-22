@@ -26,7 +26,7 @@ def estimatePet2Anat(pet, anat, output=None,
 
     tags = {
             "ref": gzipd(anat),
-            "source": gzipd(pet),
+            "source": gzipd(pet, copy=True),
             "mode": mode,
             }
 
@@ -40,14 +40,16 @@ def estimatePet2Anat(pet, anat, output=None,
 
     elif mode == "estwrite":
         tags["nbVol"] = 1
-        tags["other"] = gzipd(other)
+        tags["other"] = gzipd(other, copy=True)
 
         run_matlab(os.path.join(TPL_PATH, "estimate_pet2anat.m"), tags,
                 "apply_pet2anat_{}.m".format(tag))
 
         os.remove(tags["ref"])
         os.remove(tags["source"])
+        os.remove(tags["other"])
         os.remove("coreg_" + tags["source"])
+
         rsl = glob("coreg_*.nii")[0]
         run_shell("gzip {}".format(rsl))
         os.rename(rsl+".gz", output)

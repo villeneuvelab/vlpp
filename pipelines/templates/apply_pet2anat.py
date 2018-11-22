@@ -4,7 +4,7 @@
 
 import os
 from glob import glob
-from vlpp.utils import add_suffix, nfmap2dict, warn, run_shell
+from vlpp.utils import add_suffix, nfmap2dict, warn, run_shell, gzipd, run_matlab, TPL_PATH
 from vlpp.registration import applyWarpImageMultiTransform, estimatePet2Anat
 
 
@@ -31,13 +31,46 @@ def main():
             "fwhm": 6,
             }
 
+    petToEstimate = "${petToEstimate}"
+    if "${config.set_origin_to_centerOfMass_pet}" == "true":
+
+        dsts = []
+        for niigz in [petToEstimate, pet4070, pet5070]:
+            nii = gzipd(niigz)
+            #dst = nii.replace("_input_", "_").replace("_copy", "")
+            #shutil.move(nii, dst)
+            #dsts.append(dst)
+            dsts.append(nii)
+
+        tags = {
+                "petToEstimate": dsts[0],
+                "pet4070": dsts[1],
+                "pet5070": dsts[2],
+                }
+        run_matlab(
+                os.path.join(TPL_PATH, "set_origin_to_centerOfMass_pet.m"),
+                tags, "set_origin_to_centerOfMass.m")
+
+        for dst in dsts:
+            run_shell("gzip {}".format(dst))
+
+        petToEstimate = dsts[0].replace("_copy", "_acpc") + ".gz"
+        os.rename(dsts[0]+".gz", petToEstimate)
+
+        pet4070 = dsts[1].replace("_copy", "_acpc") + ".gz"
+        os.rename(dsts[1]+".gz", pet4070)
+
+        pet5070 = dsts[2].replace("_copy", "_acpc") + ".gz"
+        os.rename(dsts[2]+".gz", pet5070)
+
+
     for pet, _dir, params in zip(
             [pet4070, pet5070, pet4070],
             ["pet", "centiloid", "tmp"],
             [petParams, centiloidParams, tmpParams],
             ):
 
-        output = os.path.join(_dir, add_suffix(pet, "space-anat"))
+        output = os.path.join(_dir, add_suffix(pet, "space-anat")).replace("_acpc", "")
 
         # Apply transform
         if transitional != "false":
@@ -54,7 +87,6 @@ def main():
             if mode == "ants":
                 petTemp = applyWarpImageMultiTransform(pet, anat, pet2anat)
             elif mode == "spm":
-                petToEstimate = "${petToEstimate}"
                 petTemp = estimatePet2Anat(
                         petToEstimate, anat, mode="estwrite", other=pet, tag=_dir)
 
