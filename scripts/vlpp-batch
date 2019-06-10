@@ -6,6 +6,7 @@ import argparse
 import glob
 import os
 import pandas
+import socket
 import sys
 import time
 
@@ -46,7 +47,7 @@ def get_arguments():
 
     parser.add_argument(
             '-r', '--rapid',
-            required=False, default="yai-974-aa",
+            required=False, default="ctb-villens",
             help='Your RAPid number on guillimin',
             )
 
@@ -129,7 +130,7 @@ class Qsub(object):
     def petFile(self, line):
         if self.mode == "pad":
             petDir = os.path.join(
-                    "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
+                    "/project", "ctb-villens", "dataset", "PreventAD",
                     "pet", "sourcedata", line.pet_dir)
             pattern = "*_4D_*1.mnc"
 
@@ -138,7 +139,7 @@ class Qsub(object):
             baseDir = line.PIB_pwd
             petDir = baseDir.replace(
                     "/home/gonjil/project_yai",
-                    "/sf1/project/yai-974-aa")
+                    "/project/ctb-villens")
             imgName = line["img-name"]
             pattern = imgName #.replace(".gz", "")
 
@@ -170,12 +171,12 @@ class Qsub(object):
     def fsDir(self, line):
         if self.mode == "pad":
             return os.path.join(
-                    "/sf1", "project", "yai-974-aa", "dataset", "PreventAD",
+                    "/project", "ctb-villens", "dataset", "PreventAD",
                     "pet", "derivatives", "freesurfer", line.fs_dir)
 
         elif self.mode == "dian":
             return os.path.join(
-                    "/sf1", "project", "yai-974-aa", "dataset", "DIAN",
+                    "/project", "ctb-villens", "dataset", "DIAN",
                     "derivatives", "freesurfer-v5.3.0",
                     "sub-" + line.participant_id + "_ses-" + line.session_id)
 
@@ -262,16 +263,21 @@ class Qsub(object):
                 self.tpl.stream(**tags).dump(qsubScript)
 
             if self.args.submit:
-                call("qsub {}".format(qsubScript), shell=True)
+                call("sbatch {}".format(qsubScript), shell=True)
                 time.sleep(0.2)
 
 
     @property
     def tpl(self):
+        h = socket.gethostname()
+        if h.startswith("beluga"):
+            tplName = "beluga.sh"
+        else:
+            tplName = "guillimin.sh"
         return Environment(
                 loader=FileSystemLoader(TPL_PATH),
                 trim_blocks=True,
-                ).get_template("guillimin_qsub.sh")
+                ).get_template(tplName)
 
 
 def main():

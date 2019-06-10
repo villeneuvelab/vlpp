@@ -6,7 +6,7 @@ import os
 
 from glob import glob
 from vlpp.utils import save_json
-from qamosaic import qamosaic
+from vlpp.qamosaic import Mosaic
 
 
 def main():
@@ -40,37 +40,37 @@ def main():
 
     # Anat
     tag = "anat"
-    m = qamosaic.Mosaic(anat, mask=brainmask, cmap="gray")
+    m = Mosaic(anat, mask=brainmask, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # Atlas
     tag = "atlas"
-    m = qamosaic.Mosaic(anat, mask=brainmask, overlay=atlas, cmap="gray")
+    m = Mosaic(anat, mask=brainmask, overlay=atlas, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # Pet
     tag = "pet"
-    m = qamosaic.Mosaic(pet, mask=brainmask, contour=cerebellumCortex)
+    m = Mosaic(pet, mask=brainmask, contour=cerebellumCortex)
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # SUVR Baker
     tag = "suvrbaker"
-    m = qamosaic.Mosaic(suvrBaker, mask=brainmask)
+    m = Mosaic(suvrBaker, mask=brainmask)
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # Atlas Baker
     tag = "atlasbaker"
-    m = qamosaic.Mosaic(anat, mask=brainmask, overlay=atlasBaker, cmap="gray")
+    m = Mosaic(anat, mask=brainmask, overlay=atlasBaker, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # Pet Atlas
     tag = "petatlas"
-    m = qamosaic.Mosaic(pet, mask=brainmask, overlay=atlas, cmap="gray")
+    m = Mosaic(pet, mask=brainmask, overlay=atlas, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     participant_info = m.save(target)
 

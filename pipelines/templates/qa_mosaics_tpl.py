@@ -7,7 +7,7 @@ import os
 from glob import glob
 from vlpp.utils import save_json
 from jinja2 import Environment, FileSystemLoader
-from qamosaic import qamosaic
+from vlpp.qamosaic import Mosaic
 
 
 
@@ -32,13 +32,13 @@ def main():
     """
     # Anat template
     tag = "anattpl"
-    m = qamosaic.Mosaic(anattpl, contour=tpl, cmap="gray", rot=0)
+    m = Mosaic(anattpl, contour=tpl, cmap="gray", rot=0)
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target)
 
     # PET template
     tag = "pettpl"
-    m = qamosaic.Mosaic(centtpl, contour=tpl, rot=0)
+    m = Mosaic(centtpl, contour=tpl, rot=0)
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     participant_info = m.save(target)
     """
@@ -46,10 +46,10 @@ def main():
     # Centiloid ROI
     for roi in ["CerebGry", "Pons", "WhlCblBrnStm", "WhlCbl", "ctx"]:
         tag = "cent{}".format(roi)
-        roiPath = os.path.join("/sf1", "project", "yai-974-aa", "local",
+        roiPath = os.path.join("/project", "ctb-villens", "quarantine",
                 "atlas", "Centiloid_Std_VOI", "nifti", "1mm",
                 "voi_{}_1mm.nii".format(roi))
-        m = qamosaic.Mosaic(centtpl, contour=roiPath, rot=0)
+        m = Mosaic(centtpl, contour=roiPath, rot=0)
         target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
         participant_info = m.save(target)
 

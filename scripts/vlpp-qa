@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import socket
 import sys
 import time
 
@@ -25,8 +26,8 @@ def get_arguments():
 
     parser.add_argument(
             '-r', '--rapid',
-            required=False, default="yai-974-aa",
-            help='Your RAPid number on guillimin',
+            required=False, default="ctb-villens",
+            help='Your RAPid number on Compute Canada',
             )
 
     parser.add_argument(
@@ -77,7 +78,7 @@ class Qa(object):
 
         qsubScript = os.path.join(self.codeDir, "vlpp_qa.sh")
         self.tpl.stream(**self.tags).dump(qsubScript)
-        call("qsub {}".format(qsubScript), shell=True)
+        call("sbatch {}".format(qsubScript), shell=True)
 
 
     @property
@@ -85,7 +86,7 @@ class Qa(object):
         return Environment(
                 loader=FileSystemLoader(TPL_PATH),
                 trim_blocks=True,
-                ).get_template("guillimin_qsub.sh")
+                ).get_template("beluga.sh")
 
 
 def main():

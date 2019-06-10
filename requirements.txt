@@ -1,5 +1,6 @@
 future>=0.17.0
 graphviz>=0.10.1
+ipython>=7.1.1
 Jinja2>=2.10
 jupyter>=1.0.0
 matplotlib>=3.0.1

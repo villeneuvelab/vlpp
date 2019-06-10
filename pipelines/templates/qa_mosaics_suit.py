@@ -6,7 +6,7 @@ import os
 
 from glob import glob
 from vlpp.utils import save_json
-from qamosaic import qamosaic
+from vlpp.qamosaic import Mosaic
 
 
 def main():
@@ -28,13 +28,13 @@ def main():
 
     # Anat
     tag = "suitAnat"
-    m = qamosaic.Mosaic(anat, mask=suit, overlay=suit, cmap="gray")
+    m = Mosaic(anat, mask=suit, overlay=suit, cmap="gray")
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     m.save(target, suit=True)
 
     # Pet
     tag = "suitPet"
-    m = qamosaic.Mosaic(pet, mask=suit, overlay=suit)
+    m = Mosaic(pet, mask=suit, overlay=suit)
     target = "data/{0}_{1}_mosaic.jpg".format(participant_id, tag)
     participant_info = m.save(target, suit=True)
 
