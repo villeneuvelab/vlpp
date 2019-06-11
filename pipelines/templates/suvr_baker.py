@@ -24,6 +24,7 @@ def main():
         "boneSpm": gzipd("${boneSpm}"),
         "softSpm": gzipd("${softSpm}"),
         "atlasCereb": gzipd("${atlasCereb}"),
+        "scannerResolution": "${scannerResolution}",
         }
 
     run_matlab(os.path.join(TPL_PATH, "suvr_baker.m"), tags, "suvr_baker.m")
@@ -49,6 +50,13 @@ def main():
     atlas = "${atlas}"
     imgstats = ImgStatsFromAtlas(suvr, atlas, stats)
     imgstats.compute()
+
+    #roigroups
+    src = "FINAL0_roigroups.mat"
+    dst = os.path.join(
+            "baker", add_suffix(tags["pet"], "pvc-rousset"))
+    dst = dst.replace("_copy", "").replace(".nii", ".mat")
+    shutil.copy(src, dst)
 
 
 if __name__ == '__main__':

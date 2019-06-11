@@ -45,7 +45,7 @@ cd {{participant}}
 
 if [ -f "work.tar.gz" ]
 then
-    tar zxvf work.tar.gz
+    tar zxf work.tar.gz
     rm work.tar.gz
 fi
 
@@ -53,7 +53,7 @@ fi
 
 vlpp-qa.nf -profile qa
 cd ${SLURM_SUBMIT_DIR}
-tar zcvf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
+tar zcf qa.tar.gz qa/assets/ qa/data/*js qa/data/*jpg qa/*.html
 cd {{participant}}
 
 {% else %}
@@ -62,6 +62,6 @@ vlpp.nf --pet {{pet}} --freesurfer {{freesurfer}} --participant {{participant}} 
 
 {% endif %}
 
-tar zcvf work.tar.gz work/
+tar zcf work.tar.gz work/
 rm -Rf work/
 

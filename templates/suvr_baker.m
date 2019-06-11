@@ -17,7 +17,7 @@ try,
 
         addpath('{{bakerDir}}');
         %TAU_PVC_RUNME_Create_ROIs_For_Rousset('{{atlas}}','{{pet}}','{{gmSpm}}','{{wmSpm}}','{{csfSpm}}','{{boneSpm}}','{{softSpm}}','{{atlasCereb}}',[6.5 6.5 7.5]),
-        TAU_RUNME_Create_ROIs_For_Rousset('{{atlas}}','{{pet}}','{{gmSpm}}','{{wmSpm}}','{{csfSpm}}','{{boneSpm}}','{{softSpm}}','{{atlasCereb}}',[6.5 6.5 7.5]),
+        TAU_RUNME_Create_ROIs_For_Rousset('{{atlas}}','{{pet}}','{{gmSpm}}','{{wmSpm}}','{{csfSpm}}','{{boneSpm}}','{{softSpm}}','{{atlasCereb}}',{{scannerResolution}}),
 
 
 

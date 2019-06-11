@@ -423,13 +423,14 @@ process suvr_baker {
     file softSpm
     file atlasCereb
     val tracer from config.tracer
+    val scannerResolution from config.scanner_resolution
 
     output:
     file "baker/*"
     file "stats/*"
 
-    when:
-    tracer == "TAU"
+    //when:
+    //tracer == "TAU"
 
     script:
     template "suvr_baker.py"
